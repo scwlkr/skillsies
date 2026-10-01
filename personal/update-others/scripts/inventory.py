@@ -51,7 +51,7 @@ def records_for(root, lock):
 
 def fetch_tree(source, ref):
     result = subprocess.run(
-        ["gh", "api", f"repos/{source}/git/trees/{quote(ref, safe='')}?recursive=1"],
+        ["gh", "api", "--hostname", "github.com", f"repos/{source}/git/trees/{quote(ref, safe='')}?recursive=1"],
         capture_output=True, text=True, timeout=90,
     )
     if result.returncode:

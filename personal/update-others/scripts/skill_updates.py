@@ -17,6 +17,8 @@ from inventory import check, print_report, summary
 def digest_tree(root):
     digest = hashlib.sha256()
     for path in sorted(root.rglob("*")):
+        if "__pycache__" in path.relative_to(root).parts or path.name == ".DS_Store":
+            continue
         if path.is_file() or path.is_symlink():
             digest.update(str(path.relative_to(root)).encode())
             digest.update(str(path.readlink()).encode() if path.is_symlink() else path.read_bytes())
@@ -85,7 +87,6 @@ def main():
     try:
         records = check(root, lock_path)
         if args.command == "update":
-            print_report(records)
             records, backup = update(root, lock_path, records)
             if backup:
                 print("Update verified; personal skills preserved.")

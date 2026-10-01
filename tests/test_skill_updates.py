@@ -149,6 +149,14 @@ class SkillUpdateTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Personal skill files changed"):
             self.run_update(records, unexpected, lambda *_: records)
 
+    def test_runtime_cache_changes_do_not_count_as_personal_source_changes(self):
+        personal = self.repo / "personal"
+        before = skill_updates.digest_tree(personal)
+        (personal / "mine/__pycache__").mkdir()
+        (personal / "mine/__pycache__/helper.pyc").write_bytes(b"runtime cache")
+        (personal / ".DS_Store").write_bytes(b"finder metadata")
+        self.assertEqual(skill_updates.digest_tree(personal), before)
+
 
 if __name__ == "__main__":
     unittest.main()

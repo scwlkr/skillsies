@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 
 from inventory import STATE, block_parts, inspect, metadata, read
+from ci import append_todos
 
 ASSETS = Path(__file__).resolve().parent.parent / "assets"
 
@@ -97,8 +98,10 @@ def apply(root, args):
     ignore = "/tools/project-cli/target/"
     if ignore not in ignored.splitlines():
         put(".gitignore", ignored + ("\n" if ignored and not ignored.endswith("\n") else "") + ignore + "\n")
+    handoff = read(root, "SETUP-TODO.md")
     if not info["routes"] and not (root / "SETUP-TODO.md").exists():
-        put("SETUP-TODO.md", "# Setup handoff\n\n- [ ] Wire real app commands into `tools/project-cli/src/routes.rs`; exercise one real feature through `./project` and capture its result.\n")
+        handoff = "# Setup handoff\n\n- [ ] Wire real app commands into `tools/project-cli/src/routes.rs`; exercise one real feature through `./project` and capture its result.\n"
+    put("SETUP-TODO.md", append_todos(handoff, info["ci"]["todos"]))
     state = {"version": 1, **config, "hashes": hashes}
     put(STATE, json.dumps(state, indent=2, ensure_ascii=False) + "\n")
     # Preflight above prevents collisions or missing configuration from causing partial setup.
@@ -112,4 +115,5 @@ def apply(root, args):
         if "project" not in writes:
             writes["project"] = ""
     return {"changed": list(writes), "preserved": preserved,
+            "ci_alignment": info["ci"]["alignment"],
             "next": "Review AGENTS.md conflicts; run setup.py check", "app_routes": len(info["routes"])}

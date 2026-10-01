@@ -5,6 +5,7 @@ import re
 import subprocess
 
 from instructions import command_conflicts
+from ci import inspect_ci
 
 START = "<!-- scwlkr-project-setup:start -->"
 END = "<!-- scwlkr-project-setup:end -->"
@@ -111,5 +112,6 @@ def inspect(root):
         "linear_candidates": urls, "manifests": manifests, "git_changes": dirty,
         "routes": detect_routes(root), "review_instructions": review[:30],
         "command_conflicts": command_conflicts(agents),
+        "ci": inspect_ci(root),
         "review_truncated": len(review) > 30,
     }

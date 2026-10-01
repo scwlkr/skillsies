@@ -2,6 +2,7 @@
 import curses
 import unicodedata
 import textwrap
+from pathlib import Path
 
 
 def safe(value):
@@ -49,6 +50,20 @@ def page_size(screen):
     return max(1, screen.getmaxyx()[0] - 19)
 
 
+def compact_path(value, width):
+    text = safe(value)
+    home = safe(Path.home()) + "/"
+    if text.startswith(home):
+        text = "~/" + text[len(home):]
+    width = max(1, width)
+    if len(text) <= width:
+        return text
+    if width < 8:
+        return text[-width:]
+    prefix = min(12, width // 3)
+    return text[:prefix] + "…" + text[-(width - prefix - 1):]
+
+
 def draw_list(screen, state, summary, scan, message="", preview=False):
     screen.erase()
     height, width = screen.getmaxyx()
@@ -72,7 +87,8 @@ def draw_list(screen, state, summary, scan, message="", preview=False):
     for offset, row in enumerate(rows[start:start + count]):
         index = start + offset
         marker = "[x]" if row["id"] in state.selected else "[ ]" if row["selectable"] else " --"
-        line = f"  {marker}  {size(row['allocated_bytes']):>11}  {safe(row['category'])[:12]:12} {row['path']}"
+        prefix = f"  {marker}  {size(row['allocated_bytes']):>11}  {safe(row['category'])[:12]:12} "
+        line = prefix + compact_path(row["path"], width - len(prefix) - 3)
         put(screen, 13 + offset, line, curses.A_REVERSE if index == state.cursor else 0)
     if not rows:
         put(screen, 13, "No matches. / clears or changes search; f changes filter.")

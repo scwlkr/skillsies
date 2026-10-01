@@ -44,6 +44,13 @@ def plan(blocked=False):
 
 
 class TerminalReviewTests(unittest.TestCase):
+    def test_long_path_display_keeps_project_and_artifact_tail(self):
+        path = "/Users/fixture/.codex/worktrees/a-very-long-worktree/Project/target"
+        compact = view.compact_path(path, 36)
+        self.assertLessEqual(len(compact), 36)
+        self.assertTrue(compact.endswith("/Project/target"))
+        self.assertEqual(path, "/Users/fixture/.codex/worktrees/a-very-long-worktree/Project/target")
+
     def check_interrupted_job(self, approved):
         release, finished = threading.Event(), threading.Event()
         def work():

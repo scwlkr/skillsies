@@ -2,42 +2,81 @@
 
 [![skills.sh](https://skills.sh/b/scwlkr/skillsies)](https://skills.sh/scwlkr/skillsies)
 
-Reusable agent skills I use for documentation, design critique, repo cleanup, and writing new skills.
+My global agent skills: personal skills in Git, downloaded skills on disk.
 
-## Install
-
-```sh
-npx skills add scwlkr/skillsies
+```text
+skillsies/
+  personal/<skill-name>/SKILL.md   # Authored/customized skills, tracked and pushed
+  others/<skill-name>/SKILL.md     # Downloaded skills, ignored by Git
+  scripts/setup.py                # Connect the global installation folders
 ```
 
-To list the skills without installing them:
+## Set up this checkout
 
 ```sh
-npx skills add scwlkr/skillsies --list
+python3 scripts/setup.py
 ```
 
-## Skills
+This links `~/.agents/skills` to `others/`, so global skills.sh downloads and updates automatically use that directory. Codex discovers personal skills through a link in `~/.codex/skills`. Existing Codex skill directories move into the appropriate folder with links preserving their old paths. Identical existing personal copies are preserved under ignored `.local/backups/`; conflicting copies stop setup before migration. Running setup again is safe.
+
+Codex's built-in `.system` skills, plugin caches, and project-scoped skills stay in their managed locations. The skills.sh source/update lock stays at `~/.agents/.skill-lock.json`; downloaded skill files and machine-local lock state are never uploaded here.
+
+## Write a personal skill
+
+Create `personal/<skill-name>/SKILL.md`:
+
+```md
+---
+name: my-skill
+description: What it does and when to use it.
+---
+
+Instructions for the task.
+```
+
+New folders inside `personal/` are discovered through the existing links. No separate installation step is needed. If a skill does not appear, restart Codex.
+
+Commit and push personal changes normally. Downloads are automatic; Git uploads remain deliberate.
+
+## Download other people's skills
+
+Use global scope and Codex as the target:
+
+```sh
+npx skills add owner/repo -g -a codex
+npx skills update -g
+```
+
+The ordinary global symlink installation mode writes directly into `others/` through `~/.agents/skills`. No wrapper or background watcher is required. Installs without `-g` remain local to the current project. Avoid `--copy` if you want one canonical copy.
+
+For Codex's built-in GitHub installer, explicitly pass this checkout's `others/` directory with `--dest`; its default destination is a separate Codex folder. An older direct Codex install can be consolidated by running setup again.
+
+## Personal skills
 
 | Skill | Use it for |
 | --- | --- |
-| `initial-docs` | Create a compact AI-friendly documentation system for new or early-stage software projects. |
-| `perfect-docs` | Upgrade an existing software project into a mature, modular, verified documentation system. |
-| `spring-cleaning` | Clean, consolidate, and standardize project docs into a coherent reader path. |
-| `design-refine` | Run an intense design questioning session and produce synced `DESIGN.md` and `DESIGN.html` artifacts. |
-| `write-a-skill` | Create new agent skills with proper structure, progressive disclosure, and bundled resources. |
+| `initial-docs` | Create compact project documentation. |
+| `perfect-docs` | Improve an existing project's documentation system. |
+| `spring-cleaning` | Consolidate and standardize project docs. |
+| `design-refine` | Refine design decisions and produce synced design artifacts. |
+| `write-a-skill` | Write reusable agent skills. |
+| `relentless-execution` | Add an execution mandate to a prompt. |
+| `bubbas-public-style` | Apply the Bubba's Fireworks public-page visual system. |
+| `test-audit` | Assess test value using the active repository's own conventions. |
 
-## skills.sh
+`test-audit` is a locally customized version of [OpenClaw's test-audit](https://github.com/openclaw/openclaw/tree/main/.agents/skills/test-audit), retained as personal work so upstream updates cannot silently replace the adaptations. Keep attribution when editing or sharing derived skills.
 
-This repo is structured for skills.sh:
+## Install these skills elsewhere
 
-```txt
-skills/<skill-name>/SKILL.md
+```sh
+npx skills add scwlkr/skillsies
+npx skills add scwlkr/skillsies --list
 ```
 
-The skills.sh page should appear at:
+The skills CLI recursively discovers the committed `personal/` tree. `others/` is absent from GitHub, so it is never redistributed by these commands.
 
-```txt
-https://skills.sh/scwlkr/skillsies
+## Verify setup logic
+
+```sh
+python3 -m unittest discover -s tests -v
 ```
-
-skills.sh picks up repo pages after the repo is installed through the `skills` CLI, and page updates may wait on cache refreshes.

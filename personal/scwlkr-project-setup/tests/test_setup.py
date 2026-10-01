@@ -101,6 +101,24 @@ class SetupTests(unittest.TestCase):
         self.assertIn("AGENTS.md setup block", result["preserved"])
         self.assertEqual(self.snapshot(), before)
 
+    def test_readiness_requires_cli_examples_except_explicit_bootstrap(self):
+        self.first_apply()
+        agents = self.root / "AGENTS.md"
+        managed = agents.read_text()
+        old = ("## Verification\nRun `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, "
+               "and `cargo test`.\n```sh\nCARGO_NET_OFFLINE=true cargo xtask verify\n```\n")
+        agents.write_text(old + managed)
+        result = self.setup("check", ok=False)
+        self.assertFalse(result["ready"])
+        self.assertEqual({item["line"] for item in result["command_conflicts"]}, {2, 4})
+        self.assertEqual(len(self.setup("inspect")["command_conflicts"]), 4)
+        repaired = old.replace("cargo fmt --check", "./project fmt").replace("cargo ", "./project ")
+        bootstrap = "## CLI bootstrap\n```sh\ncargo build --manifest-path tools/project-cli/Cargo.toml\n```\n"
+        agents.write_text(repaired + bootstrap + managed)
+        self.assertTrue(self.setup("check")["ready"])
+        agents.write_text(bootstrap + "## Normal work\nRun `cargo test`.\n" + managed)
+        self.assertFalse(self.setup("check", ok=False)["ready"])
+
     def test_collisions_and_symlinks_do_not_partially_apply(self):
         (self.root / "project").write_text("unrelated file")
         before = self.snapshot()

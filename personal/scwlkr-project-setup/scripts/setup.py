@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 from inventory import block_parts, inspect, metadata, read
+from instructions import command_conflicts
 from scaffold import apply
 
 
@@ -19,9 +20,14 @@ def check(root):
                if not (root / path).is_file()]
     if missing or not state:
         return {"ready": False, "missing": missing or ["tools/project-cli/setup.json"]}
-    _, block, _ = block_parts(read(root, "AGENTS.md"))
+    agents = read(root, "AGENTS.md")
+    _, block, _ = block_parts(agents)
     missing = [key for key in ("team", "linear_project")
                if not state.get(key) or state[key] not in block]
+    conflicts = command_conflicts(agents)
+    if conflicts:
+        return {"ready": False, "missing": missing, "command_conflicts": conflicts,
+                "next": "Route examples through ./project; raw calls belong only under CLI bootstrap/repair headings"}
     results = {}
     for name, args in (("help", ["--help"]), ("doctor", ["doctor"])):
         try:

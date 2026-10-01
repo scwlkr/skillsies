@@ -1,0 +1,11 @@
+[package]
+name = "project-cli"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.70"
+publish = false
+
+# Keep the setup CLI independent of the application's workspace/toolchain migration.
+[workspace]
+
+[dependencies]

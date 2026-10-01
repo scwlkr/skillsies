@@ -15,6 +15,7 @@ from datetime import datetime
 
 from capacity import measure
 from report import generate
+from dashboard import export as export_dashboard
 
 
 SKILL = Path(__file__).resolve().parents[1]
@@ -43,6 +44,14 @@ def build(cache):
     return binary
 
 
+def scanner_command(command, admin):
+    """Use only an already authenticated administrator session for metadata scanning."""
+    if not admin:
+        return command
+    subprocess.run(["/usr/bin/sudo", "-n", "true"], check=True, timeout=10)
+    return ["/usr/bin/sudo", "-n", *command]
+
+
 def arguments():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", action="append", type=Path, help="Directory to scan; repeat for disjoint scopes. Default: macOS Data volume.")
@@ -56,6 +65,7 @@ def arguments():
     parser.add_argument("--timeout", type=int, default=600, help="Maximum scanner runtime in seconds; a timeout is a failed audit, not a complete report.")
     parser.add_argument("--cache-dir", type=Path, default=Path.home() / "Library/Caches/macbook-cleanup", help="Cached release build location.")
     parser.add_argument("--output", type=Path, help="New report folder (default: ./outputs/macbook-cleanup-TIMESTAMP).")
+    parser.add_argument("--admin", action="store_true", help="Use existing sudo authentication for the read-only Rust scanner only. Start with access.py --admin for one Terminal password prompt.")
     args = parser.parse_args()
     if platform.system() != "Darwin":
         parser.error("This wrapper requires macOS. The Rust scanner can be tested separately on Unix.")
@@ -85,6 +95,7 @@ def main():
     for excluded in [*args.exclude, output]:
         command += ["--exclude", str(excluded.expanduser().resolve())]
     print(f"Scanning metadata with {args.threads} workers…", file=sys.stderr)
+    command = scanner_command(command, args.admin)
     raw = subprocess.run(command, check=True, stdout=subprocess.PIPE, timeout=args.timeout).stdout
     scan = json.loads(raw)
     scan["capacity_before_scan"] = capacity_before
@@ -92,6 +103,10 @@ def main():
     capacity = measure(volume, args.target_percent)
     (output / "scan.json").write_text(json.dumps(scan, indent=2) + "\n")
     paths = generate(scan, capacity, output)
+    try:
+        export_dashboard(json.loads(Path(paths["summary"]).read_text()), scan, paths["html"])
+    except (OSError, RuntimeError, subprocess.SubprocessError) as error:
+        print(f"Dashboard build unavailable: {error}. Opening the basic report still works.", file=sys.stderr)
     print(json.dumps({"output": str(output), "elapsed_seconds": scan["elapsed_seconds"],
                       "files": scan["files"], "coverage_errors": scan["error_count"],
                       "used_percent": capacity["used_percent"], "reclaim_needed_bytes": capacity["reclaim_needed_bytes"],

@@ -48,6 +48,31 @@
         "The report avoids pushing deletions to satisfy a target already met and gives useful steps to address incomplete coverage.",
         "HTML and Markdown reports plus owner summary exist, and no real filesystem cleanup was performed."
       ]
+    },
+    {
+      "id": 2,
+      "name": "compact-review-access",
+      "prompt": "The disk report is too long. Use evals/files/target-shortfall.json to give me a compact dashboard with storage graphs and a clear way to choose items, review the exact batch, and approve deletion once. Explain how a Terminal handoff can handle permission errors without promising blanket approval. This is a frozen fixture: do not scan the real Mac, launch Terminal, change access settings, or delete anything. Save report.html, report.md and owner-summary.md (roughly 5-8 lines) to OUTPUT_DIR. Keep the physical usage and optimistic recovery limits honest.",
+      "expected_output": "Compact offline shadcn dashboard and concise access/batch workflow summary without any real actions.",
+      "files": [
+        "evals/files/target-shortfall.json"
+      ],
+      "expectations": [
+        "Saved HTML uses an actual interactive shadcn/React dashboard with storage graphs, search and expandable item details.",
+        "Saved report is offline and cannot execute deletion; describes exact selection then one final batch confirmation for a live session.",
+        "Explains Full Disk Access Settings approval, app relaunch, and that sudo cannot grant macOS privacy access.",
+        "Retains 85% usage, 350 GiB target gap and optimistic 170 GiB residual without guaranteeing recovery.",
+        "Owner summary is roughly 5-8 lines and includes a report link rather than a long inventory.",
+        "No real scan, deletion, Terminal launch or Settings modification occurred."
+      ],
+      "assertions": [
+        "Saved HTML uses an actual interactive shadcn/React dashboard with storage graphs, search and expandable item details.",
+        "Saved report is offline and cannot execute deletion; describes exact selection then one final batch confirmation for a live session.",
+        "Explains Full Disk Access Settings approval, app relaunch, and that sudo cannot grant macOS privacy access.",
+        "Retains 85% usage, 350 GiB target gap and optimistic 170 GiB residual without guaranteeing recovery.",
+        "Owner summary is roughly 5-8 lines and includes a report link rather than a long inventory.",
+        "No real scan, deletion, Terminal launch or Settings modification occurred."
+      ]
     }
   ]
 }

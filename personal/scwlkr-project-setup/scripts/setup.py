@@ -11,6 +11,7 @@ from pathlib import Path
 from inventory import block_parts, inspect, metadata, read
 from instructions import command_conflicts
 from scaffold import apply
+from ci import inspect_ci
 
 
 def check(root):
@@ -41,6 +42,7 @@ def check(root):
             break
     ready = not missing and all(value["exit"] == 0 for value in results.values())
     return {"ready": ready, "missing": missing, "checks": results,
+            "ci_alignment": inspect_ci(root)["alignment"],
             "scope": "CLI scaffold and prerequisites; app behavior remains separately verified"}
 
 

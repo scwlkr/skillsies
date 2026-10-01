@@ -42,7 +42,11 @@ class SetupTests(unittest.TestCase):
         self.assertEqual(list(self.root.iterdir()), [])
         result = self.first_apply()
         self.assertIn("project", result["changed"])
-        self.assertTrue(self.setup("check")["ready"])
+        checked = self.setup("check")
+        self.assertTrue(checked["ready"])
+        self.assertEqual(checked["ci_alignment"], "pending")
+        self.assertFalse((self.root / ".github").exists())
+        self.assertIn("setup:ci-discovery", (self.root / "SETUP-TODO.md").read_text())
         self.assertIn("app_commands=0", self.cli("doctor").stdout)
         self.assertTrue((self.root / "SETUP-TODO.md").is_file())
         self.assertEqual(self.cli("unknown").returncode, 2)
@@ -131,6 +135,54 @@ class SetupTests(unittest.TestCase):
         self.setup("apply", "--team", "Example", "--linear-project", PROJECT, ok=False)
         self.assertEqual(list(outside.iterdir()), [])
         self.assertFalse((self.root / "AGENTS.md").exists())
+
+    def test_ci_handoff_preserves_workflows_and_completed_owner_work(self):
+        workflow = self.root / ".github/workflows/verify.yml"
+        workflow.parent.mkdir(parents=True)
+        workflow.write_text("name: CI\non: [pull_request]\njobs:\n  verify:\n    runs-on: ubuntu-latest\n"
+                            "    steps:\n      - run: cargo test\n")
+        original = workflow.read_bytes()
+        todo = self.root / "SETUP-TODO.md"
+        owner = "# Owner handoff\n\n- [x] Preserve the signed protocol.\n"
+        todo.write_text(owner)
+        ci = self.setup("inspect")["ci"]
+        self.assertEqual({item["id"] for item in ci["todos"]}, {"ci-scope", "ci-cache", "ci-verify"})
+        self.first_apply()
+        self.assertEqual(workflow.read_bytes(), original)
+        self.assertTrue(todo.read_text().startswith(owner))
+        todo.write_text(todo.read_text().replace("- [ ] Separate", "- [x] Separate") + "\nOwner evidence retained.\n")
+        before = self.snapshot()
+        self.assertEqual(self.setup()["changed"], [])
+        self.assertEqual(self.snapshot(), before)
+        # A filtered/cached workflow is only a hint; required results still need verification.
+        workflow.write_text("on:\n  pull_request:\n    paths: ['src/**']\njobs:\n  verify:\n"
+                            "    steps:\n      - uses: actions/cache@v4\n      - run: cargo test\n")
+        ci = self.setup("inspect")["ci"]
+        self.assertEqual([item["id"] for item in ci["todos"]], ["ci-verify"])
+        self.assertEqual(ci["alignment"], "pending")
+        # One cached workflow cannot mask an expensive, unscoped sibling.
+        (workflow.parent / "other.yml").write_bytes(original)
+        ci = self.setup("inspect")["ci"]
+        self.assertEqual({item["id"] for item in ci["todos"]}, {"ci-scope", "ci-cache", "ci-verify"})
+
+    def test_ci_inspection_reports_unread_and_custom_provider_without_execution(self):
+        workflow = self.root / ".github/workflows/large.yml"
+        workflow.parent.mkdir(parents=True)
+        workflow.write_text("#" * 65537)
+        ci = self.setup("inspect")["ci"]
+        self.assertEqual(ci["unread"], [".github/workflows/large.yml"])
+        self.assertEqual({item["id"] for item in ci["todos"]}, {"ci-review", "ci-verify"})
+        workflow.unlink()
+        (self.root / "Jenkinsfile").write_text("sh 'touch SHOULD_NOT_EXIST'\n")
+        self.first_apply()
+        self.assertFalse((self.root / "SHOULD_NOT_EXIST").exists())
+        self.assertEqual(self.setup("inspect")["ci"]["files"][0]["file"], "Jenkinsfile")
+        for number in range(33):
+            (workflow.parent / f"{number}.yml").write_text("on: [pull_request]\n")
+        ci = self.setup("inspect")["ci"]
+        self.assertTrue(ci["truncated"])
+        self.assertEqual(len(ci["files"]), 32)
+        self.assertIn("ci-review", {item["id"] for item in ci["todos"]})
 
 
 if __name__ == "__main__":

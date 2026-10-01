@@ -1,18 +1,16 @@
 ---
-name: update-others
+name: update-skills
 description: Check and update downloaded global skills in the skillsies others folder using a deterministic CLI. Use when asked to refresh installed third-party skills or check for upstream updates.
 ---
 
-# Update Downloaded Skills
+# Update Skills
 
-Run the bundled CLI; do not spend model inference comparing skill instructions or rebuilding an updater.
+When invoked as `$update-skills`, immediately run `python3 <this-skill>/scripts/skill_updates.py update`. Resolve `<this-skill>` from this SKILL.md's directory. No preliminary planning, questions, or separate check is needed; the CLI checks before updating.
 
-- Check only: `python3 <this-skill>/scripts/skill_updates.py check`.
-- Apply updates when requested: `python3 <this-skill>/scripts/skill_updates.py update`.
-- On the owner's machine, the same commands are available as `skill-updates check` and `skill-updates update`.
+If explicitly asked only to check, run the same command with `check` instead of `update`. On the owner's machine, `skill-updates update` and `skill-updates check` are equivalent shortcuts.
 
-The CLI inventories the global downloaded directory, reads the skills.sh source lock, compares GitHub folder revisions, and delegates updates to the existing skills CLI. It backs up changed downloads and lock metadata under the checkout's ignored `.local/skill-update-backups/`, then checks the result. It never selects personal skills, installs new upstream skills, or deletes folders missing upstream.
+The CLI makes no model calls. It inventories downloaded skills, compares recorded GitHub folder revisions, backs up changed downloads and source metadata under ignored `.local/skill-update-backups/`, and verifies updates. It preserves personal skills and leaves untracked, missing, or ambiguous upstream folders intact.
 
-Report available/applied updates and any skipped folders or failures. A folder without provenance is untracked, not verified current; do not guess its source. A uniquely matching moved folder is delegated to the official updater and must pass verification. Missing or ambiguous upstream folders are reported and left intact. Do not force-refresh customized or untracked copies.
+Return one short summary of applied/available updates, skipped folders, and failures. Do not inspect or compare individual skill instructions, repeat checks after a successful command, guess missing sources, or force-refresh skipped copies. Surface errors with the exact next step when known.
 
 Direct CLI use requires Python 3.10+, authenticated GitHub CLI (`gh`), and Node/npm (`npx`). The ordinary commands use `~/.agents/skills` and `~/.agents/.skill-lock.json`; `check --json` provides a machine-readable report. Checks compare recorded upstream revisions, not local edits or the semantic quality of a skill. Updates preserve a backup of any local download edits before replacing them.

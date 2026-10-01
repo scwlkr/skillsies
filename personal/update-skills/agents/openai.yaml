@@ -1,4 +1,4 @@
 interface:
-  display_name: "Update Downloaded Skills"
+  display_name: "Update Skills"
   short_description: "Check and update downloaded skills with a CLI"
-  default_prompt: "Use $update-others to check and update my downloaded global skills."
+  default_prompt: "Use $update-skills to immediately update my downloaded global skills with the bundled CLI and report a brief summary."

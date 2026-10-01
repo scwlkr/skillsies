@@ -50,11 +50,11 @@ npx skills update -g
 For an inference-free inventory and verified update with backups:
 
 ```sh
-python3 personal/update-others/scripts/skill_updates.py check
-python3 personal/update-others/scripts/skill_updates.py update
+python3 personal/update-skills/scripts/skill_updates.py check
+python3 personal/update-skills/scripts/skill_updates.py update
 ```
 
-On my machine these are also installed as `skill-updates check` and `skill-updates update`. The personal `update-others` skill invokes this same CLI. It compares recorded GitHub folder revisions, reports downloads with missing provenance or upstream paths, and updates changed tracked skills through the existing skills CLI. Backups and update logs stay in ignored `.local/skill-update-backups/`. It leaves personal skills, untracked downloads, and upstream-deleted skills intact. Python 3.10+, authenticated `gh`, and Node/npm are required; `check --json` emits a machine-readable report. A successful exit means the operation completed; the report still lists any untracked or missing upstream folders, whose freshness is unverified.
+On my machine these are also installed as `skill-updates check` and `skill-updates update`. Invoking `$update-skills` immediately runs this same CLI to check and apply updates, then returns a brief summary. The CLI makes no model calls. It compares recorded GitHub folder revisions, reports downloads with missing provenance or upstream paths, and updates changed tracked skills through the existing skills CLI. Backups and update logs stay in ignored `.local/skill-update-backups/`. It leaves personal skills, untracked downloads, and upstream-deleted skills intact. Python 3.10+, authenticated `gh`, and Node/npm are required; `check --json` emits a machine-readable report. A successful exit means the operation completed; the report still lists any untracked or missing upstream folders, whose freshness is unverified.
 
 The ordinary global symlink installation mode writes directly into `others/` through `~/.agents/skills`. No wrapper or background watcher is required. Installs without `-g` remain local to the current project. Avoid `--copy` if you want one canonical copy.
 
@@ -72,7 +72,7 @@ For Codex's built-in GitHub installer, explicitly pass this checkout's `others/`
 | `relentless-execution` | Add an execution mandate to a prompt. |
 | `bubbas-public-style` | Apply the Bubba's Fireworks public-page visual system. |
 | `test-audit` | Assess test value using the active repository's own conventions. |
-| `update-others` | Check and update downloaded skills with a deterministic CLI. |
+| `update-skills` | Check and update downloaded skills with a deterministic CLI. |
 
 `test-audit` is a locally customized version of [OpenClaw's test-audit](https://github.com/openclaw/openclaw/tree/main/.agents/skills/test-audit), retained as personal work so upstream updates cannot silently replace the adaptations. Keep attribution when editing or sharing derived skills.
 

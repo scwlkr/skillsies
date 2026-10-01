@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import patch
 
 
-scripts = Path(__file__).resolve().parents[1] / "personal/update-others/scripts"
+scripts = Path(__file__).resolve().parents[1] / "personal/update-skills/scripts"
 sys.path.insert(0, str(scripts))
 import inventory
 import skill_updates

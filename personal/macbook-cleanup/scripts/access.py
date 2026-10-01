@@ -81,7 +81,7 @@ def launch_terminal(launcher):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, help="Private launcher directory; audit goes in its audit/ child.")
-    parser.add_argument("--admin", action="store_true", help="Ask sudo once inside Terminal for read-only scanning.")
+    parser.add_argument("--admin", action="store_true", help="Ask for administrator access inside Terminal before the full scan.")
     parser.add_argument("--launch", action="store_true", help="Open the generated launcher in Terminal.")
     parser.add_argument("--settings", action="store_true", help="Open Full Disk Access settings; only you can grant access.")
     parser.add_argument("--status", action="store_true", help="Print a read-only access probe as JSON.")
@@ -100,7 +100,7 @@ def main(argv=None):
         result["launcher"] = str(launcher)
         result["audit"] = str(launcher.parent / "audit")
         result["terminal"] = launch_terminal(launcher) if args.launch else "Prepared; Terminal was not launched."
-        result["dashboard"] = "Graphs and selection buttons open in a local browser dashboard; Terminal shows progress and results."
+        result["interface"] = "Everything runs in Terminal: storage bars, search, selections, final DELETE confirmation, and measured results. No browser opens."
     print(json.dumps(result, indent=2))
     return 0
 

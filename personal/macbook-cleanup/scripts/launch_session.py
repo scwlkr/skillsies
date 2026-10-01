@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the Terminal audit, then keep its local review dashboard available."""
+"""Run the Terminal audit, then select and confirm cleanup entirely in Terminal."""
 
 import argparse
 import json
@@ -7,8 +7,12 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+from datetime import datetime
+import secrets
 
-from access import ACCESS_STEPS, SCRIPTS, access_status, open_settings
+from access import SCRIPTS
+from permissions import request_access
+from cleanup_plan import private_json
 
 
 def display(value):
@@ -21,8 +25,9 @@ def banner():
         print("\033[2J\033[H\033[1;36mMACBOOK CLEANUP\033[0m")
     else:
         print("MACBOOK CLEANUP")
-    print("Scan → choose items in your dashboard → confirm the exact final list")
-    print("Control-Command-F makes Terminal fullscreen. Graphs open in your browser.\n")
+    print("Scan → choose items here in Terminal → confirm the exact final list")
+    print("Arrows move · Space selects · Enter reviews · DELETE confirms · q exits.\n")
+    print("Control-Command-F makes this Terminal window full screen.\n")
 
 
 def print_summary(report_dir):
@@ -42,13 +47,11 @@ def print_summary(report_dir):
 
 
 def prepare_tools():
-    """Build both caches as the user before any sudo credential lifetime begins."""
+    """Build the scanner as the user before any sudo credential lifetime begins."""
     from scan import build as build_scanner
-    from dashboard import build as build_dashboard
 
-    print("Preparing cached scanner and dashboard…", flush=True)
+    print("Preparing cached Rust scanner…", flush=True)
     build_scanner(Path.home() / "Library/Caches/macbook-cleanup")
-    build_dashboard()
 
 
 def print_cleanup_summary(report_dir):
@@ -87,40 +90,67 @@ def print_cleanup_summary(report_dir):
     print(f"Saved outcomes: {display(path)}")
 
 
-def run_session(output, admin=False):
+def start_review(report_dir, preview=False):
+    from terminal_review import run_review
+    return run_review(report_dir, preview)
+
+
+def session_state(output, stage, **details):
+    try:
+        terminal = os.ttyname(sys.stdin.fileno()) if sys.stdin.isatty() else None
+    except (OSError, ValueError):
+        terminal = None
+    private_json(Path(output) / "session-state.json", {
+        "stage": stage, "pid": os.getpid(), "updated_at": datetime.now().astimezone().isoformat(),
+        "terminal": terminal, **details,
+    })
+
+
+def run_session(output, admin=False, report_dir=None, preview=False):
     output = Path(output).expanduser().resolve()
-    report_dir = output / "audit"
+    existing = report_dir is not None
+    report_dir = Path(report_dir).expanduser().resolve() if existing else output / "audit"
+    if not existing and report_dir.exists() and any(report_dir.iterdir()):
+        report_dir = output / f"audit-{datetime.now():%Y%m%d-%H%M%S}-{secrets.token_hex(3)}"
+    output.mkdir(parents=True, exist_ok=True, mode=0o700)
+    output.chmod(0o700)
     banner()
-    access = access_status()
-    if access["blocked"]:
-        print("Protected directories could not be read. One-time setup:")
-        print(ACCESS_STEPS)
-        if sys.stdin.isatty():
-            answer = input("Open Full Disk Access settings now? [y/N] ").strip().lower()
-            if answer in ("y", "yes"):
-                open_settings()
-                print("After granting access, quit/reopen Terminal and run the same launcher again.")
-                return 78
-        print("Continuing with partial access; blocked paths will appear in the report.\n")
-    if admin and not sys.stdin.isatty():
-        raise RuntimeError("Administrator scanning needs an interactive Terminal for sudo authentication.")
-    prepare_tools()
-    if admin:
-        print("Administrator password: read-only scan access. This does not approve deletion.")
-        subprocess.run(["/usr/bin/sudo", "-v"], check=True)
-    command = [sys.executable, str(SCRIPTS / "scan.py"), "--output", str(report_dir)]
-    if admin:
-        command.append("--admin")
-    print("Scanning file metadata…", flush=True)
-    with (output / "scan-result.json").open("x") as stream:
-        subprocess.run(command, check=True, stdout=stream)
-    print("\nAudit complete.")
+    if not sys.stdin.isatty():
+        raise RuntimeError("Administrator scanning and cleanup need an interactive Terminal.")
+    session_state(output, "started", report_dir=str(report_dir))
+    if not existing:
+        session_state(output, "preparing_scanner")
+        prepare_tools()
+        session_state(output, "awaiting_access", admin=admin)
+        if not request_access(admin):
+            session_state(output, "access_setup_or_cancelled")
+            return 78
+        command = [sys.executable, str(SCRIPTS / "scan.py"), "--output", str(report_dir), "--no-dashboard"]
+        if admin:
+            command.append("--admin")
+        print("Scanning all file metadata on the Data volume…", flush=True)
+        session_state(output, "scanning", report_dir=str(report_dir))
+        with (output / f"scan-result-{report_dir.name}.json").open("x") as stream:
+            subprocess.run(command, check=True, stdout=stream)
+        print("\nAudit complete.")
+    elif admin:
+        session_state(output, "awaiting_access", admin=admin)
+        if not request_access(admin):
+            session_state(output, "access_setup_or_cancelled")
+            return 78
     print_summary(report_dir)
-    print("\nOpening dashboard. Choose items, then review and confirm the final deletion list.")
-    print("This launcher has not deleted anything. Keep this Terminal open for the review session.\n", flush=True)
-    subprocess.run([sys.executable, str(SCRIPTS / "review_server.py"),
-                    "--report-dir", str(report_dir), "--wait"], check=True)
-    print_cleanup_summary(report_dir)
+    print("\nStarting Terminal selection. Nothing is deleted until you type DELETE for the final list.", flush=True)
+    session_state(output, "reviewing", report_dir=str(report_dir))
+    result = start_review(report_dir, preview)
+    session_state(output, result.get("state", "finished") if result else "cancelled")
+    if result and result.get("exit_code"):
+        if result.get("state") == "access_setup":
+            print("Enable Terminal in Full Disk Access, quit/reopen Terminal, then rerun this launcher.")
+        return result["exit_code"]
+    if result:
+        print_cleanup_summary(report_dir)
+    else:
+        print("Review cancelled. Nothing deleted.")
     return 0
 
 
@@ -128,8 +158,15 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--admin", action="store_true")
+    parser.add_argument("--report-dir", type=Path, help="Review an existing audit in Terminal; no rescan.")
+    parser.add_argument("--preview", action="store_true", help="Test selection and approval without deletion.")
     args = parser.parse_args(argv)
-    return run_session(args.output, args.admin)
+    try:
+        return run_session(args.output, args.admin, args.report_dir, args.preview)
+    except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
+        if args.output.is_dir():
+            session_state(args.output, "error", error=str(error))
+        raise
 
 
 if __name__ == "__main__":

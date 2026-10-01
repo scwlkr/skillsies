@@ -133,87 +133,97 @@ class SessionTests(unittest.TestCase):
         self.assertNotIn("\n", value)
         self.assertIn("\\u001b", value)
 
-    def test_admin_refuses_noninteractive_authentication(self):
-        with patch.object(launch_session, "access_status", return_value={"blocked": []}), \
+    def test_refuses_noninteractive_authentication(self):
+        with tempfile.TemporaryDirectory() as temp, \
                 patch.object(launch_session.sys.stdin, "isatty", return_value=False), \
                 patch.object(launch_session.subprocess, "run") as run, \
                 contextlib.redirect_stdout(io.StringIO()):
             with self.assertRaisesRegex(RuntimeError, "interactive Terminal"):
-                launch_session.run_session(Path("/tmp"), admin=True)
+                launch_session.run_session(Path(temp), admin=True)
         run.assert_not_called()
 
     def test_settings_handoff_stops_before_scan(self):
-        with patch.object(launch_session, "access_status", return_value={"blocked": ["Mail"]}), \
-                patch.object(launch_session.sys.stdin, "isatty", return_value=True), \
-                patch("builtins.input", return_value="yes"), \
-                patch.object(launch_session, "open_settings") as settings, \
-                patch.object(launch_session.subprocess, "run") as run, \
-                contextlib.redirect_stdout(io.StringIO()):
-            self.assertEqual(launch_session.run_session(Path("/tmp")), 78)
-        settings.assert_called_once()
-        run.assert_not_called()
-
-    def test_session_authenticates_once_and_runs_review_unprivileged(self):
         with tempfile.TemporaryDirectory() as temp, \
-                patch.object(launch_session, "access_status", return_value={"blocked": []}), \
+                patch.object(launch_session.sys.stdin, "isatty", return_value=True), \
+                patch.object(launch_session, "prepare_tools"), \
+                patch.object(launch_session, "request_access", return_value=False), \
+                patch.object(launch_session.subprocess, "run") as run, \
+                patch.object(launch_session, "start_review") as review, \
+                contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(launch_session.run_session(Path(temp)), 78)
+        run.assert_not_called()
+        review.assert_not_called()
+
+    def test_session_requests_access_once_then_reviews_in_terminal(self):
+        events = []
+        with tempfile.TemporaryDirectory() as temp, \
                 patch.object(launch_session.sys.stdin, "isatty", return_value=True), \
                 patch.object(launch_session, "print_summary"), \
-                patch.object(launch_session, "print_cleanup_summary") as final_summary, \
-                patch.object(launch_session, "prepare_tools") as prepare, \
-                patch.object(launch_session.subprocess, "run") as run, \
+                patch.object(launch_session, "print_cleanup_summary") as final, \
+                patch.object(launch_session, "prepare_tools", side_effect=lambda: events.append("build")), \
+                patch.object(launch_session, "request_access", side_effect=lambda admin: events.append("auth") or True) as auth, \
+                patch.object(launch_session.subprocess, "run", side_effect=lambda command, **kw: events.append(command)) as run, \
+                patch.object(launch_session, "start_review", return_value={"state": "complete"}) as review, \
                 contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(launch_session.run_session(Path(temp), admin=True), 0)
-        commands = [call.args[0] for call in run.call_args_list]
-        self.assertEqual(commands[0], ["/usr/bin/sudo", "-v"])
-        self.assertIn("--admin", commands[1])
-        self.assertIn("--wait", commands[2])
-        self.assertNotIn("sudo", " ".join(commands[2]))
-        self.assertEqual(len(commands), 3)
-        prepare.assert_called_once()
-        final_summary.assert_called_once_with(Path(temp).resolve() / "audit")
+            auth.assert_called_once_with(True)
+            review.assert_called_once_with(Path(temp).resolve() / "audit", False)
+            final.assert_called_once()
+        self.assertEqual(events[:2], ["build", "auth"])
+        command = run.call_args.args[0]
+        self.assertIn("--admin", command)
+        self.assertIn("--no-dashboard", command)
+        self.assertEqual(run.call_count, 1)
+        self.assertNotIn("review_server.py", " ".join(command))
 
     def test_scan_failure_never_starts_review(self):
         with tempfile.TemporaryDirectory() as temp, \
-                patch.object(launch_session, "access_status", return_value={"blocked": []}), \
+                patch.object(launch_session.sys.stdin, "isatty", return_value=True), \
                 patch.object(launch_session, "prepare_tools"), \
-                patch.object(launch_session.subprocess, "run", side_effect=subprocess.CalledProcessError(1, "scan")) as run, \
+                patch.object(launch_session, "request_access", return_value=True), \
+                patch.object(launch_session.subprocess, "run", side_effect=subprocess.CalledProcessError(1, "scan")), \
+                patch.object(launch_session, "start_review") as review, \
                 contextlib.redirect_stdout(io.StringIO()):
             with self.assertRaises(subprocess.CalledProcessError):
                 launch_session.run_session(Path(temp))
-        self.assertEqual(run.call_count, 1)
+        review.assert_not_called()
 
-    def test_prebuild_runs_scanner_and_dashboard_as_user(self):
+    def test_prebuild_requires_rust_only(self):
         with patch("scan.build") as scanner, patch("dashboard.build") as dashboard, \
-                patch.object(launch_session.subprocess, "run") as run, \
                 contextlib.redirect_stdout(io.StringIO()):
             launch_session.prepare_tools()
         scanner.assert_called_once_with(Path.home() / "Library/Caches/macbook-cleanup")
-        dashboard.assert_called_once_with()
-        run.assert_not_called()
+        dashboard.assert_not_called()
 
-    def test_prebuild_finishes_before_sudo_authentication(self):
-        events = []
+    def test_completed_audit_is_preserved_and_next_run_is_fresh(self):
         with tempfile.TemporaryDirectory() as temp, \
-                patch.object(launch_session, "access_status", return_value={"blocked": []}), \
+                patch.object(launch_session.sys.stdin, "isatty", return_value=True), \
+                patch.object(launch_session, "prepare_tools"), \
+                patch.object(launch_session, "request_access", return_value=True), \
+                patch.object(launch_session, "print_summary"), \
+                patch.object(launch_session.subprocess, "run"), \
+                patch.object(launch_session, "start_review", return_value=None) as review, \
+                contextlib.redirect_stdout(io.StringIO()):
+            baseline = Path(temp) / "audit"
+            baseline.mkdir()
+            (baseline / "summary.json").write_text("preserve baseline")
+            launch_session.run_session(Path(temp))
+            self.assertNotEqual(review.call_args.args[0], baseline)
+            self.assertEqual((baseline / "summary.json").read_text(), "preserve baseline")
+
+    def test_explicit_existing_review_skips_scan_and_browser(self):
+        with tempfile.TemporaryDirectory() as temp, \
                 patch.object(launch_session.sys.stdin, "isatty", return_value=True), \
                 patch.object(launch_session, "print_summary"), \
-                patch.object(launch_session, "print_cleanup_summary"), \
-                patch.object(launch_session, "prepare_tools", side_effect=lambda: events.append("build")), \
-                patch.object(launch_session.subprocess, "run", side_effect=lambda command, **kwargs: events.append(command)), \
+                patch.object(launch_session, "prepare_tools") as build, \
+                patch.object(launch_session.subprocess, "run") as scan, \
+                patch.object(launch_session, "start_review", return_value=None) as review, \
                 contextlib.redirect_stdout(io.StringIO()):
-            launch_session.run_session(Path(temp), admin=True)
-        self.assertEqual(events[0], "build")
-        self.assertEqual(events[1], ["/usr/bin/sudo", "-v"])
-
-    def test_build_failure_never_authenticates_or_scans(self):
-        with patch.object(launch_session, "access_status", return_value={"blocked": []}), \
-                patch.object(launch_session.sys.stdin, "isatty", return_value=True), \
-                patch.object(launch_session, "prepare_tools", side_effect=RuntimeError("build failed")), \
-                patch.object(launch_session.subprocess, "run") as run, \
-                contextlib.redirect_stdout(io.StringIO()):
-            with self.assertRaisesRegex(RuntimeError, "build failed"):
-                launch_session.run_session(Path("/tmp"), admin=True)
-        run.assert_not_called()
+            report = Path(temp) / "existing"
+            launch_session.run_session(Path(temp), report_dir=report, preview=True)
+            review.assert_called_once_with(report.resolve(), True)
+        scan.assert_not_called()
+        build.assert_not_called()
 
     def test_final_summary_reports_measurement_recovery_and_safe_item_outcomes(self):
         with tempfile.TemporaryDirectory() as temp:

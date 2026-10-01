@@ -66,6 +66,7 @@ def arguments():
     parser.add_argument("--cache-dir", type=Path, default=Path.home() / "Library/Caches/macbook-cleanup", help="Cached release build location.")
     parser.add_argument("--output", type=Path, help="New report folder (default: ./outputs/macbook-cleanup-TIMESTAMP).")
     parser.add_argument("--admin", action="store_true", help="Use existing sudo authentication for the read-only Rust scanner only. Start with access.py --admin for one Terminal password prompt.")
+    parser.add_argument("--no-dashboard", action="store_true", help="Skip the web UI build for a Terminal-only session.")
     args = parser.parse_args()
     if platform.system() != "Darwin":
         parser.error("This wrapper requires macOS. The Rust scanner can be tested separately on Unix.")
@@ -104,7 +105,8 @@ def main():
     (output / "scan.json").write_text(json.dumps(scan, indent=2) + "\n")
     paths = generate(scan, capacity, output)
     try:
-        export_dashboard(json.loads(Path(paths["summary"]).read_text()), scan, paths["html"])
+        if not args.no_dashboard:
+            export_dashboard(json.loads(Path(paths["summary"]).read_text()), scan, paths["html"])
     except (OSError, RuntimeError, subprocess.SubprocessError) as error:
         print(f"Dashboard build unavailable: {error}. Opening the basic report still works.", file=sys.stderr)
     print(json.dumps({"output": str(output), "elapsed_seconds": scan["elapsed_seconds"],

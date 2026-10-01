@@ -1,0 +1,79 @@
+{
+  "scan": {
+    "roots": [
+      "/Users/demo"
+    ],
+    "scope": "Selected roots only",
+    "elapsed_seconds": 3.2,
+    "allocated_bytes": 214748364800,
+    "logical_bytes": 1342177280000,
+    "files": 20000,
+    "directories": 800,
+    "hardlink_duplicates": 1,
+    "symlinks_skipped": 10,
+    "dataless_skipped": 20,
+    "external_mounts_skipped": 1,
+    "error_count": 2,
+    "errors": [
+      "/Users/demo/Library/Mail: Operation not permitted",
+      "/Users/demo/Library/Messages: Operation not permitted"
+    ],
+    "excluded": [
+      "/private/var/vm"
+    ],
+    "top_directories": [
+      {
+        "path": "/Users/demo/projects",
+        "allocated_bytes": 128849018880,
+        "logical_bytes": 128849018880
+      }
+    ],
+    "top_files": [
+      {
+        "path": "/Users/demo/vms/disk.img",
+        "allocated_bytes": 8589934592,
+        "logical_bytes": 1073741824000,
+        "hard_links": 1,
+        "modified_unix": 0
+      }
+    ],
+    "candidates": [
+      {
+        "path": "/Users/demo/projects/app/target",
+        "allocated_bytes": 64424509440,
+        "logical_bytes": 64424509440,
+        "category": "build",
+        "action": "Confirm inactive Cargo builds and preserve source and release evidence before considering generated artifacts.",
+        "risk": "review"
+      },
+      {
+        "path": "/Users/demo/.ollama/models",
+        "allocated_bytes": 42949672960,
+        "logical_bytes": 42949672960,
+        "category": "models",
+        "action": "Inspect active models and remove only selected unused models through the model manager.",
+        "risk": "app-managed"
+      },
+      {
+        "path": "/Users/demo/Library/CloudStorage",
+        "allocated_bytes": 85899345920,
+        "logical_bytes": 85899345920,
+        "category": "cloud",
+        "action": "Verify uploads and offline needs, then use Finder Remove Download; do not delete synced copies.",
+        "risk": "offload"
+      }
+    ]
+  },
+  "capacity": {
+    "total_bytes": 1073741824000,
+    "free_bytes": 161061273600,
+    "used_bytes": 912680550400,
+    "used_percent": 85,
+    "target_percent": 50,
+    "target_used_bytes": 536870912000,
+    "reclaim_needed_bytes": 375809638400,
+    "source": "frozen APFS container fixture",
+    "warnings": [],
+    "measured_at": "2026-10-01T15:00:00Z"
+  }
+}

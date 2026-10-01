@@ -1,0 +1,53 @@
+{
+  "skill_name": "macbook-cleanup",
+  "evals": [
+    {
+      "id": 0,
+      "name": "target-shortfall",
+      "prompt": "My Mac is 85% full and I want it at 50% or less. Use the frozen scan and APFS capacity in evals/files/target-shortfall.json to create a useful local report and a concise owner summary. These are test fixtures; do not rescan the real Mac, delete anything, or upload paths. Preserve source, active model workloads and release evidence. Tell me what to review first, whether those candidates can get me to 50%, and any limits in the scan. Save the HTML/Markdown report, any JSON evidence you produce, and owner-summary.md to OUTPUT_DIR.",
+      "expected_output": "Correct measured target math, allocated-space interpretation, actionable cautious report, and explicit partial coverage; no destructive changes.",
+      "files": [
+        "evals/files/target-shortfall.json"
+      ],
+      "expectations": [
+        "The report states 85% measured usage and exactly 350 GiB needed to reach 50%.",
+        "Candidates total 180 GiB, leaving an optimistic 170 GiB gap (67% usage), with no promise that the target is achievable.",
+        "The virtual disk is interpreted as 8 GiB allocated versus 1000 GiB logical, and no claim of 1000 GiB recovery is made.",
+        "Partial selected-root coverage and the two permission errors are disclosed with a concrete Full Disk Access follow-up.",
+        "Next steps preserve source, active models and release evidence, and distinguish cloud offload from cloud deletion.",
+        "HTML and Markdown reports plus owner summary exist, and no real filesystem cleanup was performed."
+      ],
+      "assertions": [
+        "The report states 85% measured usage and exactly 350 GiB needed to reach 50%.",
+        "Candidates total 180 GiB, leaving an optimistic 170 GiB gap (67% usage), with no promise that the target is achievable.",
+        "The virtual disk is interpreted as 8 GiB allocated versus 1000 GiB logical, and no claim of 1000 GiB recovery is made.",
+        "Partial selected-root coverage and the two permission errors are disclosed with a concrete Full Disk Access follow-up.",
+        "Next steps preserve source, active models and release evidence, and distinguish cloud offload from cloud deletion.",
+        "HTML and Markdown reports plus owner summary exist, and no real filesystem cleanup was performed."
+      ]
+    },
+    {
+      "id": 1,
+      "name": "already-at-target",
+      "prompt": "I want my MacBook only half full. This supplied audit has a virtual disk that looks like 1000 GiB, and permission errors in Mail/Messages. Use the frozen scan and capacity in evals/files/already-at-target.json to create a local report and concise owner summary. These are test fixtures: do not rescan, read real private files, delete anything or upload data. Explain how much needs to be reclaimed now, how to interpret the virtual disk, and what to do about incomplete coverage. Save the HTML/Markdown report, any JSON evidence you produce, and owner-summary.md to OUTPUT_DIR.",
+      "expected_output": "Correct measured target math, allocated-space interpretation, actionable cautious report, and explicit partial coverage; no destructive changes.",
+      "files": [
+        "evals/files/already-at-target.json"
+      ],
+      "expectations": [
+        "The report states 49% usage, zero required reclaim, and that the 50% target is already met.",
+        "The virtual disk is interpreted as 8 GiB allocated versus 1000 GiB logical, and no claim of 1000 GiB recovery is made.",
+        "Permission gaps in Mail/Messages are disclosed without claiming a complete scan or accessing their contents.",
+        "The report avoids pushing deletions to satisfy a target already met and gives useful steps to address incomplete coverage.",
+        "HTML and Markdown reports plus owner summary exist, and no real filesystem cleanup was performed."
+      ],
+      "assertions": [
+        "The report states 49% usage, zero required reclaim, and that the 50% target is already met.",
+        "The virtual disk is interpreted as 8 GiB allocated versus 1000 GiB logical, and no claim of 1000 GiB recovery is made.",
+        "Permission gaps in Mail/Messages are disclosed without claiming a complete scan or accessing their contents.",
+        "The report avoids pushing deletions to satisfy a target already met and gives useful steps to address incomplete coverage.",
+        "HTML and Markdown reports plus owner summary exist, and no real filesystem cleanup was performed."
+      ]
+    }
+  ]
+}

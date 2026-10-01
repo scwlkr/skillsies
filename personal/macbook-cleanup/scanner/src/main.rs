@@ -1,5 +1,6 @@
 mod classify;
 mod model;
+mod storage;
 mod walk;
 
 use std::path::PathBuf;

@@ -75,6 +75,20 @@ class ScannerTests(unittest.TestCase):
         for field in ("hardlink_duplicates", "symlinks_skipped", "external_mounts_skipped", "dataless_skipped"):
             self.assertEqual(result[field], 0)
 
+    def test_storage_categories_use_unique_allocated_file_bytes(self):
+        cache = self.write("Library/Caches/app/data.bin", b"x" * 16000)
+        project = self.write("Desktop/dev/App/target/output.bin", b"y" * 9000)
+        model = self.write(".ollama/models/model.bin", b"m" * 4000)
+        linked = self.home / "Documents/linked.bin"
+        linked.parent.mkdir()
+        os.link(cache, linked)
+        result = self.scan()
+        totals = {row["category"]: row["allocated_bytes"] for row in result["storage_categories"]}
+        self.assertEqual(sum(totals.values()), self.allocated([cache, project, model]))
+        self.assertIn("Projects & workspaces", totals)
+        self.assertIn("AI models", totals)
+        self.assertEqual(result["hardlink_duplicates"], 1)
+
     def test_hardlinks_are_counted_once_across_distinct_roots(self):
         original = self.write("one/original.bin")
         linked = self.home / "two/copy.bin"

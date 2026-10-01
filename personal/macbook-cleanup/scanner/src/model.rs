@@ -124,6 +124,7 @@ pub struct Scan {
     pub top_files: Vec<Record>,
     pub top_directories: Vec<Record>,
     pub candidates: Vec<Candidate>,
+    pub storage_categories: Vec<crate::storage::StorageCategory>,
 }
 
 impl Scan {

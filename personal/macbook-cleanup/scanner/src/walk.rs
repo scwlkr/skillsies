@@ -85,6 +85,7 @@ pub fn scan(mut options: Options) -> Result<Scan, String> {
     let mut hardlinks = HashSet::new();
     let mut top_files = BinaryHeap::new();
     let mut candidates = vec![];
+    let mut storage = crate::storage::Storage::new(&options.home);
     for root in &unique {
         let device = fs::symlink_metadata(root).map_err(|e| e.to_string())?.dev();
         let excludes = options.excludes.clone();
@@ -177,6 +178,7 @@ pub fn scan(mut options: Options) -> Result<Scan, String> {
                 }
                 scan.allocated_bytes += meta.allocated;
                 scan.logical_bytes += meta.logical;
+                storage.add(&path, meta.allocated);
                 if let Some(parent) = path.parent() {
                     directories
                         .entry(parent.to_owned())
@@ -230,6 +232,7 @@ pub fn scan(mut options: Options) -> Result<Scan, String> {
     scan.top_files = sorted_top(top_files);
     scan.top_directories = sorted_top(top_dirs);
     scan.candidates = disjoint(candidates);
+    scan.storage_categories = storage.finish();
     scan.elapsed_seconds = start.elapsed().as_secs_f64();
     Ok(scan)
 }

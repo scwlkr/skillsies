@@ -4,6 +4,8 @@ import json
 import re
 import subprocess
 
+from instructions import command_conflicts
+
 START = "<!-- scwlkr-project-setup:start -->"
 END = "<!-- scwlkr-project-setup:end -->"
 STATE = "tools/project-cli/setup.json"
@@ -108,5 +110,6 @@ def inspect(root):
         "linear_project": state.get("linear_project") or (urls[0] if len(urls) == 1 else None),
         "linear_candidates": urls, "manifests": manifests, "git_changes": dirty,
         "routes": detect_routes(root), "review_instructions": review[:30],
+        "command_conflicts": command_conflicts(agents),
         "review_truncated": len(review) > 30,
     }

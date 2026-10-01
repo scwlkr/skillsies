@@ -9,13 +9,11 @@ import time
 from pathlib import Path
 
 try:
-    from .cleanup_items import eligibility, normalized, protected_parts
+    from .cleanup_items import eligibility, normalized
+    from .cleanup_tree import SafetyError, tree_evidence, recovery_estimates, same_metadata
 except ImportError:
-    from cleanup_items import eligibility, normalized, protected_parts
-
-
-class SafetyError(ValueError):
-    pass
+    from cleanup_items import eligibility, normalized
+    from cleanup_tree import SafetyError, tree_evidence, recovery_estimates, same_metadata
 
 
 def encode(value):
@@ -68,59 +66,6 @@ def open_parent(path):
         raise
 
 
-def tree_evidence(parent_fd, name, uid, device):
-    """Inventory without following links; only internal relative links are disposable."""
-    digest, totals, root_identity, root_ctime = hashlib.sha256(), [0, 0, 0], None, None
-
-    def visit(directory_fd, entry, relative):
-        nonlocal root_identity, root_ctime
-        if protected_parts(Path(relative).parts):
-            raise SafetyError("Protected backup, evidence or runtime data exists inside this item")
-        info = os.stat(entry, dir_fd=directory_fd, follow_symlinks=False)
-        if info.st_uid != uid:
-            raise SafetyError("Ownership differs from the current user")
-        if info.st_dev != device:
-            raise SafetyError("Nested or external mount is protected")
-        link = None
-        if stat.S_ISLNK(info.st_mode) and relative:
-            link = os.readlink(entry, dir_fd=directory_fd)
-            internal = os.path.normpath(str(Path(relative.lstrip("/")).parent / link))
-            if Path(link).is_absolute() or internal == ".." or internal.startswith("../"):
-                raise SafetyError("Absolute or outside symbolic-link target is protected")
-            checked = os.stat(entry, dir_fd=directory_fd, follow_symlinks=False)
-            if identity(checked) != identity(info) or checked.st_ctime_ns != info.st_ctime_ns:
-                raise SafetyError("Symbolic link changed during inspection")
-        elif not (stat.S_ISDIR(info.st_mode) or stat.S_ISREG(info.st_mode)):
-            raise SafetyError("Symlink or special file is protected")
-        if not stat.S_ISDIR(info.st_mode) and info.st_nlink != 1:
-            raise SafetyError("Hard-linked file cannot be safely attributed")
-        record = [relative, identity(info), info.st_size, info.st_blocks, info.st_mtime_ns,
-                  info.st_ctime_ns if relative else 0, info.st_nlink, link]
-        digest.update(encode(record))
-        totals[0] += info.st_blocks * 512
-        totals[1] += info.st_size if stat.S_ISREG(info.st_mode) else 0
-        totals[2] += 1
-        if not relative:
-            root_identity = identity(info)
-            root_ctime = info.st_ctime_ns
-        if stat.S_ISDIR(info.st_mode):
-            child_fd = os.open(entry, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
-                               dir_fd=directory_fd)
-            try:
-                if identity(os.fstat(child_fd)) != identity(info):
-                    raise SafetyError("Directory changed during inspection")
-                for child in sorted(os.listdir(child_fd)):
-                    visit(child_fd, child, f"{relative}/{child}")
-                final = os.fstat(child_fd)
-                if final.st_mtime_ns != info.st_mtime_ns or final.st_ctime_ns != info.st_ctime_ns:
-                    raise SafetyError("Directory changed during inspection")
-            finally:
-                os.close(child_fd)
-    visit(parent_fd, name, "")
-    return {"identity": root_identity, "root_ctime_ns": root_ctime, "tree_digest": digest.hexdigest(),
-            "allocated_bytes": totals[0], "logical_bytes": totals[1], "entries": totals[2]}
-
-
 def check_active(path):
     command = ["lsof", "-nP", "-F", "p"]
     command += ["+D", str(path)] if path.is_dir() else ["--", str(path)]
@@ -134,7 +79,7 @@ def check_active(path):
         raise SafetyError("Active-workload lookup was inconclusive; no deletion allowed")
 
 
-def inspect(item, home):
+def inspect(item, home, linked_inodes=()):
     path = normalized(item["path"])
     allowed, reason, manifest = eligibility(path, home)
     if not allowed or not item.get("selectable"):
@@ -147,7 +92,8 @@ def inspect(item, home):
             raise SafetyError("Expected an installer file or generated directory")
         if root.st_dev != os.stat(home).st_dev:
             raise SafetyError("External mount is protected")
-        result = tree_evidence(parent_fd, path.name, os.getuid(), root.st_dev)
+        result = tree_evidence(parent_fd, path.name, os.getuid(), root.st_dev,
+                               dependency_tree=path.name == "node_modules", linked_inodes=linked_inodes)
         result["parent_chain"] = chain
         if manifest:
             if manifest.is_symlink():
@@ -192,8 +138,27 @@ def create_plan(ids, items, home, lifetime=600):
                                "logical_bytes": evidence["logical_bytes"]})
         except (OSError, SafetyError) as exc:
             blocked.append({"id": value, "path": item["path"], "reason": str(exc)})
+    # Only links crossing approved item boundaries need content verification after unlink.
+    seen, cross_item = set(), set()
+    for row in operations:
+        inodes = set(row["evidence"]["files"])
+        cross_item.update(seen & inodes)
+        seen.update(inodes)
+    refined = []
+    for row in operations:
+        try:
+            if cross_item & row["evidence"]["files"].keys():
+                fresh = inspect(dict(row, selectable=True), home, cross_item)
+                if not same_metadata(fresh, row["evidence"]):
+                    raise SafetyError("Item changed while preparing linked-file approval")
+                row["evidence"] = fresh
+            refined.append(row)
+        except (OSError, SafetyError) as exc:
+            blocked.append({"id": row["id"], "path": row["path"], "reason": str(exc)})
+    operations = refined
+    estimated, shared = recovery_estimates(operations)
     plan = {"id": secrets.token_hex(16), "items": operations, "blocked": blocked,
-            "estimated_bytes": sum(row["allocated_bytes"] for row in operations),
+            "estimated_bytes": estimated, "shared_bytes": shared,
             "expires_at": time.time() + lifetime, "consumed": False}
     plan["digest"] = hashlib.sha256(encode(plan)).hexdigest()
     return plan
@@ -202,7 +167,7 @@ def create_plan(ids, items, home, lifetime=600):
 def public_plan(plan):
     return {key: ([{field: value for field, value in row.items() if field != "evidence"}
                    for row in plan[key]] if key == "items" else plan[key])
-            for key in ("id", "digest", "items", "blocked", "estimated_bytes", "expires_at")}
+            for key in ("id", "digest", "items", "blocked", "estimated_bytes", "shared_bytes", "expires_at")}
 
 
 def validate_confirmation(plan, payload):
@@ -213,5 +178,5 @@ def validate_confirmation(plan, payload):
     digest = payload.get("digest")
     if not isinstance(digest, str) or not secrets.compare_digest(digest, plan["digest"]):
         raise SafetyError("Plan digest does not match the reviewed batch")
-    if not plan["items"] or plan["blocked"]:
-        raise SafetyError("Resolve blocked items and create a new plan before confirming")
+    if not plan["items"]:
+        raise SafetyError("No validated items remain; nothing can be confirmed")

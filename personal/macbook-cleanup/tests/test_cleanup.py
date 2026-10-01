@@ -138,7 +138,7 @@ class CleanupTests(unittest.TestCase):
         self.assertEqual(self.run_plan(plan)["state"], "error")
         self.assertTrue(self.target.exists())
 
-    def test_symlink_outside_and_hardlinks_refused(self):
+    def test_symlink_outside_refused_and_external_hardlinks_preserved(self):
         (self.target / "escape").symlink_to(self.unselected)
         plan = self.plan()
         self.assertTrue(plan["blocked"])
@@ -146,7 +146,10 @@ class CleanupTests(unittest.TestCase):
             self.run_plan(plan)
         (self.target / "escape").unlink()
         os.link(self.unselected, self.target / "hardlink")
-        self.assertTrue(self.plan()["blocked"])
+        plan = self.plan()
+        self.assertFalse(plan["blocked"])
+        self.assertGreaterEqual(plan["shared_bytes"], self.unselected.stat().st_blocks * 512)
+        self.assertEqual(self.run_plan(plan)["state"], "complete")
         self.assertEqual(self.unselected.read_text(), "keep me")
 
     def test_internal_node_modules_symlinks_delete_link_without_following(self):

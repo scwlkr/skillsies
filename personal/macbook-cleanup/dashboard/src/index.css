@@ -1,21 +1,55 @@
 @import "tailwindcss";
 @theme inline {
-  --color-background: var(--background); --color-foreground: var(--foreground);
-  --color-card: var(--card); --color-card-foreground: var(--foreground);
-  --color-popover: var(--card); --color-popover-foreground: var(--foreground);
-  --color-primary: var(--primary); --color-primary-foreground: #101b28;
-  --color-secondary: #252a32; --color-secondary-foreground: var(--foreground);
-  --color-muted: #252a32; --color-muted-foreground: #9da6b4;
-  --color-accent: #292f39; --color-accent-foreground: var(--foreground);
-  --color-destructive: #ed826c; --color-border: #2c323b; --color-input: #333a45; --color-ring: #94c8fa;
-  --radius-sm: .5rem; --radius-md: .7rem; --radius-lg: .9rem; --radius-xl: 1.2rem;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: #101b28;
+  --color-secondary: #252a32;
+  --color-secondary-foreground: var(--foreground);
+  --color-muted: #252a32;
+  --color-muted-foreground: #9da6b4;
+  --color-accent: #292f39;
+  --color-accent-foreground: var(--foreground);
+  --color-destructive: #ed826c;
+  --color-border: #2c323b;
+  --color-input: #333a45;
+  --color-ring: #94c8fa;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.7rem;
+  --radius-lg: 0.9rem;
+  --radius-xl: 1.2rem;
 }
-:root { --background: #14171c; --foreground: #edf0f5; --card: #1c2027; --primary: #94c8fa; color-scheme: dark; }
+:root {
+  --background: #14171c;
+  --foreground: #edf0f5;
+  --card: #1c2027;
+  --primary: #94c8fa;
+  color-scheme: dark;
+}
 @layer base {
-  * { @apply border-border; }
-  body { @apply bg-background text-foreground; margin: 0; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
-  button, [role='checkbox'] { cursor: pointer; }
-  button:disabled { cursor: default; }
-  ::selection { background: #365477; }
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  button,
+  [role="checkbox"] {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: default;
+  }
+  ::selection {
+    background: #365477;
+  }
 }
-.recharts-wrapper:focus { outline: none; }
+.recharts-wrapper:focus {
+  outline: none;
+}

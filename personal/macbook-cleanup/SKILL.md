@@ -1,56 +1,61 @@
 ---
 name: macbook-cleanup
-description: Scan MacBook storage quickly with a cached parallel Rust scanner, then present a compact local shadcn dashboard with storage charts and selectable cleanup items toward 50 percent usage or less. Use when the user wants to investigate Mac disk usage or System Data, reclaim space, review caches/models/build artifacts, or select items for one final cleanup approval. Includes Terminal access setup and an exact, verified batch deletion workflow.
-compatibility: macOS; Python 3.11 or newer; Rust/Cargo and Node.js/npm for first builds. Cached binaries and dashboard assets are reused. Optional administrator authentication applies only to the metadata scanner; macOS Full Disk Access requires Settings approval.
+description: Scan MacBook storage quickly with a cached parallel Rust scanner, then show storage bars, largest items, search, selection and one exact cleanup confirmation inside native Terminal. Use when the user wants to investigate Mac disk usage or System Data, reclaim space toward 50 percent usage or less, or review caches, AI models and build artifacts. Includes Terminal permission setup, verified batch deletion and measured results. A shadcn web dashboard is optional when explicitly requested.
+compatibility: macOS; Python 3.11 or newer; Rust/Cargo for the first scanner build. Terminal review uses Python curses without Node or a browser. Optional administrator authentication elevates only the metadata scanner; Full Disk Access requires Settings approval. Node.js/npm are needed only for the optional web dashboard.
 ---
 
 # MacBook cleanup
 
-## Scan and show the dashboard
+## Open Terminal and scan
 
-Resolve this skill directory from its loaded path. Use its bundled tooling instead of writing another scanner or launching recursive du processes. The Rust scanner reads file metadata in parallel; it never reads contents or deletes files. First builds download locked dependencies; later unchanged runs reuse cached builds.
-
-```sh
-python3 <skill-directory>/scripts/scan.py --output <workspace>/outputs/macbook-cleanup-<timestamp>
-python3 <skill-directory>/scripts/review_server.py --report-dir <same-output-directory> --wait
-```
-
-Run the review server as a background/PTY session so the user can select items while the model remains responsive. Read its `review-ready` event and open that exact loopback URL with `open_in_codex` or a browser. The private token is in the URL fragment. Never publish it or the report. Keep the session alive through selection and final confirmation; do not stop the server when sending a short chat update.
-
-The dashboard uses actual shadcn components and Recharts. It shows measured physical used/free space, observed category allocation, the 50 percent gap, and an optimistic projection for selected items. Search, category filters, pagination and expandable details keep the initial view concise. `report.html` is a self-contained saved dashboard with exploratory selections; it cannot delete files. `report.md`, `summary.json` and `scan.json` retain detailed evidence. If the dashboard build is unavailable, preserve the basic HTML/Markdown report and state the missing dependency.
-
-Default audit: `/System/Volumes/Data`, eight workers, 100 MiB minimum candidate, 50 percent physical APFS container target. Use a new private output folder. Repeat `--root` for exact scoped directories; use `--exclude`, `--target-percent`, `--threads` or `--timeout` as needed. Scoped inventory is not whole-disk coverage. A timeout is a failed audit: preserve evidence, narrow the scope and retry.
-
-## Access setup and Terminal handoff
-
-When access gaps matter, prepare and open one Terminal launcher:
+Resolve this skill directory from its loaded path and use the bundled tooling. Start a new private session and actually open its launcher:
 
 ```sh
-python3 <skill-directory>/scripts/access.py --output <workspace>/outputs/macbook-cleanup-session-<timestamp> --launch --admin
+python3 <skill-directory>/scripts/access.py --output <workspace>/outputs/macbook-cleanup-session-<timestamp> --admin --launch
 ```
 
-This opens Terminal, shows progress, performs one optional sudo authentication for read-only Unix permission access, and opens the dashboard alongside it. Omit `--admin` when elevated scanning is unnecessary. Builds run as the user before authentication. Fullscreen shortcut: **Control-Command-F**. Terminal displays progress and final results; browser components cannot render inside a native terminal.
+The launcher builds the cached Rust scanner as the user, requests native access inside Terminal, scans, then opens the interactive Terminal review. It does not launch a browser. The scanner reads metadata in parallel without reading file contents or deleting files. First builds download locked dependencies; unchanged later runs reuse the binary. Omit `--admin` for a scoped audit that needs no elevated scan.
 
-Full Disk Access cannot be granted by sudo or blanket approval. The launcher can open **System Settings → Privacy & Security → Full Disk Access**. The user enables Terminal (or their chosen scanning app), quits and relaunches it, then reruns the same launcher. Explain these exact steps only when needed, without repeated approval questions. Consult [access workflow](references/access.md). Respect system protections; surface remaining inaccessible paths instead of promising unrestricted access.
+Default audit: `/System/Volumes/Data`, eight workers, 100 MiB minimum candidate, 50 percent physical APFS container target. The report goes under the session's `audit/`. A repeated launcher preserves old reports and chooses a fresh audit directory. `session-state.json` records the current stage and Terminal device; use it to distinguish an app launch request from a running session. An accepted `open` command alone does not prove the launcher ran or the user granted access. If computer-use tools prohibit Terminal control, respect that restriction and explain the supported **Control-Command-F** fullscreen shortcut.
 
-## Select, review, approve once
+For a scoped scan, use `scan.py --output <new-private-report-directory> --no-dashboard`, repeating `--root` for exact roots. Other options include `--exclude`, `--threads`, `--target-percent` and `--timeout`. Review an existing audit with `launch_session.py --output <private-session-directory> --report-dir <audit-directory>`. Scoped inventory is not whole-disk coverage. A timeout is a failed audit: preserve evidence, narrow the scope and retry.
 
-An audit authorizes scanning and reporting. It does not approve deletion. The dashboard lets the user select specific items and then click **Review selected**. The final dialog lists exact paths and freshly measured allocation. **Permanently delete N items** is the single final approval for that frozen batch. No deletion happens on selection or initial review. A preview server (`--preview`) saves the approved selection and never deletes.
+## Request access once
 
-The local API uses server-derived IDs, immutable plan identity/digest, expiry and one-use consent. It checks owner, file identity, manifest, entire subtree, protected descendants, mounts, hard links, symbolic links and active processes before acting. Whole-batch preflight precedes staging; staged items are rechecked before removal. Durable approval and staging records support recovery from interruption. Review blocked items, deselect them and create a new plan; never bypass failed checks.
+Inside Terminal, the launcher probes protected directories. If blocked, it offers **s** to open Full Disk Access settings, **c** to explicitly continue with partial coverage, or **q** to quit. Full Disk Access requires the user to enable Terminal in **System Settings → Privacy & Security → Full Disk Access**, quit Terminal completely and relaunch it, then rerun the same `.command`. The script cannot grant that toggle or defeat system protections.
 
-Only narrowly recognized, measured operations are selectable: manifest-backed project `target`/`node_modules`, individual Xcode DerivedData projects, allowlisted app cache folders and replaceable installer/archive files in Downloads. Close related apps and builds first. Large models, applications, cloud folders, simulator/runtime/VM storage and broad library roots require the owning tool and specific follow-up. Read [storage rules](references/storage-rules.md). Preserve source, uncommitted work, credentials, backups and release evidence, including protected files inside otherwise generated trees.
+With `--admin`, Terminal asks for the Mac password using `sudo -v`; typing is hidden. Only the read-only scanner runs elevated. Review and deletion run as the user. Administrator authentication and Full Disk Access are separate from final deletion approval. Surface remaining access errors instead of promising unrestricted access. Read [access workflow](references/access.md) for exact steps.
 
-If the user approves exact paths in chat, refresh and execute only those operations under the same safety checks; do not ask for the same authorization again or infer approval for new paths. Never replace this workflow with bulk rm, sudo cleanup, automated snapshot pruning or broad Trash emptying.
+## Show the largest items and explain actions
 
-## Report outcomes briefly
+The Terminal review shows physical used/free space, the 50 percent gap, observed category bars and an optimistic selection projection. All candidates are ordered by allocated size, including model storage and other items requiring investigation. Avoid burying those items behind selectable build folders.
 
-Keep chat to roughly 5–8 lines: measured disk usage, target gap, leading actionable items, coverage limits and the dashboard link. When the target is already met, say no cleanup is needed. Put the inventory, error details and lengthy caveats behind dashboard details.
+Candidates come from measured, recognized storage locations and file types, not an exhaustive AI judgment of everything disposable. The default size cutoff can omit smaller items. Parent/child candidates are collapsed to avoid double counting. Permission gaps, symlinks and unrecognized/custom model locations can limit discovery. Rust recognizes aggregate Ollama, LM Studio and Hugging Face storage; it does not list individual model identities. If models are important, follow up with the owning manager or a targeted scan of the actual custom location. Do not infer that absence from the list means no models exist.
 
-Physical capacity and observed file allocation are separate metrics. APFS shared extents, snapshots, skipped paths and outside hard links can prevent estimated space from being reclaimed. Never add overlapping directory/file tables or present logical file sizes as recovery. State the remaining gap even if every candidate were removed; do not invent a path to 50 percent.
+Use arrows to move, **Space** to select, **/** to search, **f** to cycle filters, **d** for full paths and next steps, **a** to select the visible page, and **c** to clear. **--** means the item is visible for investigation but has no exact deletion operation yet. Model aggregates need individual model review through their owning manager; do not delete entire model roots. Preserve local fine-tunes and active workloads. Read [storage rules](references/storage-rules.md).
 
-After final approval, read `cleanup-results.json` and `approved-plan.json` or the terminal's `cleanup-result` event. Report actual measured capacity, recovery and remaining gap, plus any skipped/failed/partially removed items or recovery paths. Rerun the audit after substantial cleanup to refresh the inventory. Claim the goal met only when the fresh physical usage is at or below the target.
+## Review and confirm the exact batch
+
+An audit authorizes scanning and reporting. Selections draft a list. **Enter/r** prepares a fresh batch and shows validated exact paths separately from skipped items, with allocation and shared-link estimates. The user types **DELETE** and presses Enter once to approve only that frozen validated batch. **Escape** returns to editing. One skipped path does not disable valid items; skipped paths stay intact. With `--preview`, approval saves the plan and never deletes.
+
+Selectable operations include manifest-backed project `target`/`node_modules`, individual Xcode DerivedData projects, allowlisted app caches and replaceable Downloads archives. Close related applications/builds first. Large models, applications, cloud folders, runtimes, VMs and broad library roots require a specific owning-tool action. Do not turn scan approval into blanket cleanup approval.
+
+The backend checks owner, identity, manifest, subtree, protected descendants, mounts, symlinks and active processes. Normal installed dependency fixtures such as a package's `backup`, `evidence`, `.env` or `containers` are allowed only within verified package boundaries; actual user evidence and backups remain protected. Hardlinked generated files can be unlinked while preserving outside links. Recovery counts each inode once and excludes file bytes retained outside the approved batch. Links shared across selected items receive content verification during cleanup preparation; the fast metadata scan still reads no contents.
+
+Whole-batch preflight precedes anchored staging and final rechecks. Durable approval and staging records preserve recovery evidence. If an active-process check is inconclusive, show its reason and retry after access setup or closing related workloads. Resolve failed checks instead of bypassing them. If exact paths are already authorized in chat, execute only those operations under the same checks without asking for duplicate consent. Never use broad `rm`, sudo cleanup, automated snapshot pruning or blanket Trash emptying.
+
+## Report measured outcomes briefly
+
+Keep chat to roughly 5–8 lines: measured disk usage, target gap, leading large items (including models when significant), coverage and Terminal session status. When the target is met, say no cleanup is needed. Save detailed evidence as `scan.json`, `summary.json`, `report.md` and basic `report.html`; don't open the HTML unless requested.
+
+Physical capacity and observed file allocation are separate. Shared APFS extents, snapshots and skipped paths can reduce recovery. Do not add overlapping inventory tables or describe logical file sizes as reclaimed space. State the remaining gap even if every candidate were removed; do not invent a path to 50 percent.
+
+After final approval, read `cleanup-results.json` and `approved-plan.json`. Terminal displays measured capacity, recovery and remaining gap, plus skipped/failed/partially removed items and recovery paths. Rerun the audit after substantial cleanup. Claim the goal met only when fresh measured physical usage is at or below target.
+
+## Optional web dashboard
+
+Only when the user explicitly asks for a browser UI, run `scan.py` without `--no-dashboard`, then `review_server.py --report-dir <audit> --wait` as a background session. Open its exact loopback URL; its fragment contains a private token. Keep the server alive for selection and confirmation. It uses shadcn components and Recharts. Saved `report.html` is exploratory and cannot delete; live confirmation uses the same backend as Terminal. Never publish reports or tokens.
 
 ## Verify changes
 
-Run `cargo clippy --locked --manifest-path <skill-directory>/scanner/Cargo.toml -- -D warnings`, `python3 -m unittest discover -s <skill-directory>/tests -v`, and `npm test` plus `npm run build` inside `dashboard/`. Scanner fixtures require a current release binary via `MACBOOK_SCAN_BINARY` or the normal cache. Test approval/deletion only on temporary fixtures. Verify the browser selection → exact review → preview/fixture confirmation flow, including mobile layout. Evals are in `evals/evals.json`.
+Run the Python suite (`python3 -m unittest discover -s <skill-directory>/tests -v`) and skill validation. Scanner changes also require locked Cargo clippy and scanner fixtures. Web changes require `npm test` and `npm run build` in `dashboard/`. Test consent and deletion only on temporary fixtures, including cancellation, mixed blocked/valid batches, hardlinks and protected user evidence. Evals are in `evals/evals.json`.

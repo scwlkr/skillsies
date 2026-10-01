@@ -19,7 +19,7 @@ Rust uses `lstat` metadata and 512-byte allocated blocks, not apparent file leng
 | Source / worktrees / evidence / Photos / mail | Check Git state, chat ownership, backup and uniqueness | Review individually; archive completed Codex worktrees with the app's archive_worktree tool when appropriate |
 | System Data | Explain permission gaps, shared APFS volumes and snapshot retention | Investigate with `diskutil apfs list`, `tmutil listlocalsnapshots /` and native Storage UI; do not manually remove VM/swap or snapshots |
 
-Do not sum a parent directory, its child directory and files below it. Candidate selection retains the outer classified path and suppresses descendants; that prevents arithmetic double counting but does not approve removing the entire parent. Drill into a large cache or app-managed tree with a targeted rerun before proposing exact items.
+Do not sum a parent directory, its child directory and files below it. Candidate selection retains the outer classified path and suppresses descendants; that prevents arithmetic double counting but does not approve removing the entire parent. The interactive inventory orders all items by allocated size, including nonselectable model roots. Open details for the reason and next step; use the selectable filter only when specifically choosing generated artifacts. Drill into a large cache or app-managed tree with a targeted rerun before proposing exact items.
 
 ## Sources
 
@@ -28,3 +28,11 @@ Do not sum a parent directory, its child directory and files below it. Candidate
 - [jwalk directory traversal](https://docs.rs/jwalk/latest/jwalk/struct.WalkDirGeneric.html): parallel traversal and skipping directory children.
 
 Performance depends on file counts, metadata latency, privacy permissions and disk load. Separate first-build time, Rust traversal time and end-to-end report time in any comparison; never label a warm-cache comparison as a universal speed guarantee.
+
+Cleanup preparation is separate from the fast scan: it may read selected archive
+contents and generated files hardlinked across selected items to verify identity
+through staging. Unlinking a dependency hardlink does not delete its external
+package-store copy; file bytes retained outside the selected batch are excluded
+from the recovery estimate. Files inside verified installed packages are treated
+as generated dependencies, including ordinary fixture names. Preserve custom
+patches and unique outputs before approving dependency removal.

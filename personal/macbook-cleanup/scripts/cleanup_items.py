@@ -38,6 +38,8 @@ def eligibility(path, home):
         relative = path.relative_to(home)
     except ValueError:
         return False, "Outside this user's home; use the owning tool", None
+    if relative.as_posix() in (".ollama/models", ".lmstudio/models", ".cache/huggingface"):
+        return False, "Model storage is an aggregate, not one model. Review individual model identities before removing them with the owning model manager.", None
     if protected_parts(relative.parts):
         return False, "Protected backup, evidence, cloud, runtime or source-control data", None
     if path == home or len(relative.parts) < 2:
@@ -93,5 +95,6 @@ def build_items(summary, scan, home=None):
                       "allocated_bytes": max(0, int(row.get("allocated_bytes", 0))),
                       "logical_bytes": max(0, int(row.get("logical_bytes", 0))),
                       "action": operation, "risk": "requires review" if selectable else "app-managed",
-                      "selectable": selectable, "reason": reason})
-    return sorted(items, key=lambda row: (not row["selectable"], -row["allocated_bytes"]))
+                      "selectable": selectable, "reason": reason,
+                      "next_step": row.get("action", "Review this exact item before deciding whether to remove it.")})
+    return sorted(items, key=lambda row: (-row["allocated_bytes"], row["path"]))

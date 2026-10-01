@@ -67,6 +67,9 @@ export function ReviewDialog({
         </div>
         {Boolean(plan?.blocked.length) && (
           <div className="text-xs text-destructive">
+            <p className="mb-2">
+              Skipped items stay intact. You can approve the validated items above.
+            </p>
             {plan?.blocked.map((i, n) => (
               <p key={n} className="break-all">
                 Skipped: {i.path} — {i.reason || i.error}
@@ -90,9 +93,7 @@ export function ReviewDialog({
           </AlertDialogCancel>
           <Button
             variant={preview ? "default" : "destructive"}
-            disabled={
-              busy || !plan?.items.length || Boolean(plan?.blocked.length)
-            }
+            disabled={busy || !plan?.items.length}
             onClick={confirm}
           >
             <Trash2 size={14} />

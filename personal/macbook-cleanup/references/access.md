@@ -32,11 +32,11 @@ filesystem coverage. Missing directories produce **unverified** rather than a
 false approval. The final audit remains authoritative about inaccessible paths.
 
 The launcher offers to open Settings when it detects blocked directories. If
-accepted, it stops before scanning so Terminal can be quit and relaunched. If
-declined or running noninteractively, it reports partial access and continues.
+accepted, it stops before scanning so Terminal can be quit and relaunched. Partial scanning requires an explicit **c** choice. **q** exits. Noninteractive
+sessions refuse access approval and cleanup.
 It never edits the TCC database, disables SIP, or changes directory permissions.
 
-The launcher builds its cached Rust scanner and dashboard as the normal user
+The launcher builds its cached Rust scanner as the normal user
 before requesting a password, so first-build work does not consume the sudo
 authentication window. Optional `--admin` asks for `sudo -v` inside the
 interactive Terminal once;
@@ -45,23 +45,29 @@ resolve Unix permissions, but does not grant Full Disk Access. Some system paths
 remain protected even with both permissions. A password prompt is not deletion
 approval. Review and cleanup run as the normal user, without blanket sudo.
 
-## Terminal presentation and dashboard
+## Terminal presentation
 
-Terminal owns the scan banner, progress, capacity summary, and coverage status.
-The actual shadcn components, charts, selection buttons, and final confirmation
-run in a separate local browser dashboard; native Terminal cannot render a web UI.
-The launcher starts `review_server.py --report-dir ... --wait` after a successful
-audit and keeps the session attached until review ends. After final review,
-Terminal prints measured usage, used-space reduction, the remaining target gap,
-and each approved item's deletion or recovery outcome from
-`cleanup-results.json`. Preview sessions explicitly say nothing was deleted.
+Terminal owns the complete workflow: scan progress, physical storage bars,
+observed category bars, search, selection, exact final paths, typed **DELETE**
+approval and measured cleanup results. The review uses Python curses and opens
+no browser. **Space** selects, **Enter/r** reviews, **Escape** cancels final review,
+and **d** shows full details. App-managed model storage remains visible, ordered
+by allocated size, with its reason and next step.
 
-**Control-Command-F** switches Terminal to fullscreen. Opening Terminal does not
-guarantee fullscreen: its native scripting dictionary exposes zoom and bounds,
-but no fullscreen property. Automating its green button through System Events
-would require an additional Accessibility permission. This workflow avoids that
-extra gate and leaves the supported keyboard shortcut visible in the banner.
-No third-party terminal emulator or extra UI permission is needed.
+After final review, Terminal prints measured usage, used-space reduction, the
+remaining gap and each outcome from `cleanup-results.json`. Preview sessions
+explicitly say nothing was deleted. Mixed batches show skipped paths separately;
+final approval includes only validated paths. `session-state.json` records the
+stage and terminal device without capturing passwords or keystrokes.
+
+**Control-Command-F** switches the Terminal window to fullscreen. The curses UI
+uses the available terminal screen. A launch request does not prove the script
+started: check `session-state.json` or state that launch could not be verified.
+If app-control tools prohibit Terminal, respect that restriction; do not route
+around it with other UI automation. The user can use the native shortcut.
+
+Native Terminal cannot render shadcn web components. The optional browser
+dashboard is available only when explicitly requested, using `review_server.py`.
 
 Selecting an item only drafts a cleanup list. The final confirmation must name
 the exact items to delete. The model uses that confirmed list and reports each

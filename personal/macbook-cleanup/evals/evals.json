@@ -73,6 +73,25 @@
         "Owner summary is roughly 5-8 lines and includes a report link rather than a long inventory.",
         "No real scan, deletion, Terminal launch or Settings modification occurred."
       ]
+    },
+    {
+      "id": 3,
+      "name": "terminal-model-visibility",
+      "prompt": "Frozen facts: disk85.7% full; HuggingFace32.5GiB and Ollama9.6GiB found; old build-first ordering hid them; selected11 includes4valid7blocked. User wants Terminal permission setup and one exact deletion confirmation; explain intended workflow and model visibility. Simulation only; do not scan, launch apps, change settings or delete. Save owner-workflow.md.",
+      "expected_output": "Terminal-only access/selection/typed final consent, visible models ordered by size, valid/skipped subset explanation without claiming actions.",
+      "files": [],
+      "assertions": [
+        "Uses native Terminal for selection and exact final confirmation without opening a browser.",
+        "Shows validated items and skipped paths separately, allowing final consent for the valid subset without removing skips manually.",
+        "Explains model candidates were found but buried, and orders all candidates by allocated size.",
+        "Distinguishes sudo authentication, manual Full Disk Access with app relaunch, and exact deletion consent."
+      ],
+      "expectations": [
+        "Uses native Terminal for selection and exact final confirmation without opening a browser.",
+        "Shows validated items and skipped paths separately, allowing final consent for the valid subset without removing skips manually.",
+        "Explains model candidates were found but buried, and orders all candidates by allocated size.",
+        "Distinguishes sudo authentication, manual Full Disk Access with app relaunch, and exact deletion consent."
+      ]
     }
   ]
 }

@@ -152,6 +152,7 @@ export function CleanupList({
                   {item.path}
                 </p>
                 <p>{item.reason}</p>
+                {item.next_step && <p>{item.next_step}</p>}
                 <p className="text-muted-foreground">
                   Logical size {size(item.logical_bytes)} · allocated estimate{" "}
                   {size(item.allocated_bytes)}

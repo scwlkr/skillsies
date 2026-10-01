@@ -20,6 +20,7 @@ export interface Item {
   risk: string;
   selectable: boolean;
   reason: string;
+  next_step?: string;
 }
 export interface Result {
   state: string;

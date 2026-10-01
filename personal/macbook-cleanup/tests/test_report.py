@@ -129,9 +129,12 @@ class ReportTests(unittest.TestCase):
     def test_already_met_does_not_call_for_removal(self):
         with patch.object(capacity.subprocess, "run", return_value=measure_result(free=700)):
             measured = capacity.measure(Path("/"))
-        summary, html, _ = self.generate(scan(), measured)
+        summary, html, markdown = self.generate(scan(), measured)
         self.assertEqual(summary["target_plausibility"], "already_met")
         self.assertIn("No removal is needed", html)
+        self.assertIn("No cleanup is needed for this goal", html)
+        self.assertNotIn("choose specific cleanup actions", html)
+        self.assertNotIn("choose specific cleanup actions", markdown)
 
     def test_html_and_markdown_escape_private_paths(self):
         dangerous = "/tmp/<script>alert('x')</script>|[x](javascript:x)_`\n"

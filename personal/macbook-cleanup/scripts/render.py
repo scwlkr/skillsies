@@ -93,6 +93,6 @@ details {{ margin-top:16px; }} summary {{ cursor:pointer; font-weight:600; }} li
 <details><summary>Explicit exclusions</summary>{excluded}</details>
 <details><summary>Error details</summary>{errors}</details></section>
 <section class="card"><h2 style="margin-top:0">Limits and next step</h2>{_list(summary['limitations'])}
-<p><strong>Review the contents, confirm backups, then choose specific cleanup actions.</strong> Rescan after cleanup to verify the actual disk percentage.</p></section>
+<p><strong>{safe(summary['next_step'])}</strong></p></section>
 <footer>Private report · no external assets, analytics, or network requests · paths remain in these local files.</footer>
 </main></body></html>"""

@@ -22,6 +22,8 @@ For a focused first pass or follow-up, repeat `--root` with exact directories. U
 
 Read `summary.json` and `report.md`; show `report.html` with `open_in_codex` when available. Link the local report and raw `scan.json` evidence.
 
+Keep the chat summary to roughly 5–8 lines: measured usage, target gap, a few leading review items, coverage limits and the report link. Put the detailed inventory and explanations in the report. If the target is already met, say no cleanup is needed and keep inventory review optional.
+
 - Lead with current container usage and the bytes that must be freed to reach 50 percent. Physical free space includes the macOS/shared-volume overhead; the Data volume's `df` percentage is a separate metric.
 - Name the largest actionable paths, their allocated sizes, the owning tool, and the specific check needed before removal. Prioritize inactive rebuildable artifacts and caches, then unused models/installers/apps, then verified cloud offload or external storage.
 - Treat candidate sizes as an optimistic upper bound, not guaranteed reclaim. State the remaining target gap. If candidates fall short, say so and identify large user-data categories to review or offload; do not invent a safe path to 50 percent.
@@ -41,5 +43,4 @@ After approved changes, rerun the audit and compare measured physical free space
 
 ## Verification
 
-Run `cargo test --locked --manifest-path <skill-directory>/scanner/Cargo.toml` and `python3 -m unittest discover -s <skill-directory>/tests -v` after implementation changes. Scanner fixture tests require a built binary via `MACBOOK_SCAN_BINARY` or the wrapper's normal cache location. Evals are in `evals/evals.json`; exercise both real audit and difficult target/coverage follow-ups.
-
+Build with `cargo build --release --locked --manifest-path <skill-directory>/scanner/Cargo.toml`, check with `cargo clippy --locked --manifest-path <skill-directory>/scanner/Cargo.toml -- -D warnings`, then run `python3 -m unittest discover -s <skill-directory>/tests -v`. The Python suite executes the Rust binary on real filesystem fixtures; set `MACBOOK_SCAN_BINARY` to the built executable or use the wrapper's normal cache location. Evals are in `evals/evals.json`; exercise both real audit and difficult target/coverage follow-ups.

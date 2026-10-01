@@ -124,6 +124,11 @@ def generate(scan: dict, capacity: dict, output_dir: Path) -> dict:
     else:
         assessment = "The candidate estimates could cover the target gap, but this is an optimistic scenario. Actual recovery must be measured after any approved cleanup."
     summary["assessment"] = assessment
+    summary["next_step"] = (
+        "No cleanup is needed for this goal. Keep existing data; investigate coverage gaps only if you need fuller storage attribution. Remeasure after future storage changes."
+        if status == "already_met" else
+        "Review candidate contents, confirm backups for personal data, and choose specific cleanup actions. Rescan after approved cleanup to verify the measured percentage."
+    )
     coverage = summary["coverage"]
     sections = [
         "# MacBook disk review", "", f"Measured: {md_escape(capacity['measured_at'])}", "",
@@ -148,7 +153,7 @@ def generate(scan: dict, capacity: dict, output_dir: Path) -> dict:
         "Exclusions:", *[f"- {md_escape(path)}" for path in coverage["excluded"]], "",
         "Errors:", *[f"- {md_escape(error)}" for error in coverage["errors"]], "",
         "## Limits and next step", "", *[f"- {line}" for line in LIMITATIONS], "",
-        "Review candidate contents, confirm backups for personal data, and choose specific cleanup actions. Rescan after cleanup to verify the measured percentage. Paths stay in these local report files.",
+        summary["next_step"] + " Paths stay in these local report files.",
     ]
     paths = {name: str(output_dir / filename) for name, filename in
              (("markdown", "report.md"), ("html", "report.html"), ("summary", "summary.json"))}

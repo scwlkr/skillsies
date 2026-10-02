@@ -1,4 +1,4 @@
 interface:
   display_name: "Wstack"
-  short_description: "Route work through your connected personal skills"
-  default_prompt: "Use $wstack setup this project."
+  short_description: "Apply scwlkr's coding principles and connected workflows"
+  default_prompt: "Use $wstack to complete this task with scwlkr's coding standards."

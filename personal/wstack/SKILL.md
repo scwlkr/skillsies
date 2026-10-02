@@ -28,5 +28,6 @@ Task/member defaults; user/repo rules prevail.
 - Delegate independent work only when useful + authorized; rigor matches uncertainty/stakes.
 - Agent contract: outcome, file ownership, pointers, constraints, checks. Parent reviews diff + verifies integration. Handoff: decisions/artifacts/evidence/blockers.
 - Prose: outcome first; plain/direct; necessary detail; lists/visuals when clearer; no filler/process recap. Material tradeoffs → principle + changed choice.
+- `restate` → [restate](../restate/SKILL.md).
 - `setup` → [scwlkr-project-setup](../scwlkr-project-setup/SKILL.md); paths relative to this skill. "This project" = current repo unless specified. Run from member directory; target=`ROOT`.
 - Unmatched → disclose + continue authorized work; no implied setup. Unreadable referenced member → report path/block workflow.

@@ -64,6 +64,7 @@ For Codex's built-in GitHub installer, explicitly pass this checkout's `others/`
 
 | Skill | Use it for |
 | --- | --- |
+| `wstack` | Route requests through connected personal workflows; project setup is the first member. |
 | `initial-docs` | Create compact project documentation. |
 | `perfect-docs` | Improve an existing project's documentation system. |
 | `spring-cleaning` | Consolidate and standardize project docs. |

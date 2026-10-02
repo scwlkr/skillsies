@@ -1,0 +1,4 @@
+interface:
+  display_name: "Wstack"
+  short_description: "Route work through your connected personal skills"
+  default_prompt: "Use $wstack setup this project."

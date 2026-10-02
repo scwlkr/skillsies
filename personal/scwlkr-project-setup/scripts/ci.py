@@ -4,9 +4,9 @@ import re
 from itertools import islice
 
 POLICY = {
-    "ci-scope": "Separate lightweight documentation checks from full code verification; use focused code checks only with reliable scope detection, otherwise run full verification. Acceptance: docs-only changes avoid app builds; shared code, dependencies, build/CI configuration and uncertain scope run the full suite. Generated docs and executable examples receive their actual behavior checks.",
-    "ci-cache": "Review repeated CI installs/builds and cache useful dependencies, tools and outputs with platform/toolchain/lockfile-aware keys. Acceptance: a warm run reuses work and dependency/toolchain changes invalidate affected caches; document any intentionally uncached expensive step.",
-    "ci-verify": "Verify local CI routing with representative docs, code, dependency and CI configuration changes. Acceptance: retain the exact clean commit SHA, commands and aggregate results; applicable local checks pass before push/merge, skipped work cannot hide failures, and edits or a new commit SHA require fresh checks. Hosted runners need a documented external requirement; required hosted results also pass on the current commit before merge/Done. Local keyword detection does not prove this.",
+    "ci-scope": "Separate non-executable docs → light checks/no app builds; reliable scope → focused; shared code/dependencies/build/CI/uncertain scope → full suite; generated docs/executable examples → behavior checks. Verify routing.",
+    "ci-cache": "Cache repeated installs/builds: dependencies/tools/outputs keyed by platform/toolchain/lockfile. Prove warm reuse + invalidation after dependency/toolchain changes; explain uncached costly steps.",
+    "ci-verify": "Verify local CI routing: docs/code/dependency/CI changes. Applicable checks pass before push/merge on exact clean SHA; retain SHA/base/commands/aggregate results; skipped work cannot hide failures; edits/new SHA → recheck. Hosted → documented requirement/owner direction; required current results pass before merge/Done. Keywords ≠ proof.",
 }
 PATTERNS = {
     "scope": r"paths(?:-ignore)?\s*:|(?:paths-filter|changed-files)@|git\s+diff\b|changes\s*:",
@@ -45,7 +45,7 @@ def inspect_ci(root):
     truncated |= len(ordered) > 32
     todos = []
     if not paths and not truncated:
-        todos.append({"id": "ci-discovery", "text": "Locate existing local CI gates or plan them behind `./project` when implementation is scheduled; no standard hosted CI config was found, which is not a gap by itself. Acceptance: document proportional checks, useful caching, and exact clean commit SHA/commands/results; passing applicable local checks gate push/merge, and changed commits require fresh checks. Hosted runners need a documented external requirement. Setup does not provision CI."})
+        todos.append({"id": "ci-discovery", "text": "Locate/plan local CI behind `./project`: proportional checks, useful caching, exact clean SHA/base/commands/results. Applicable checks pass before push/merge; edits/new SHA → recheck. No hosted config ≠ gap; hosted → documented requirement/owner direction. Setup does not provision CI."})
     else:
         # Per-file hints avoid treating one cached/filtered workflow as coverage for all.
         for key, predicate in (("scope", lambda row: not row["scope"]),
@@ -53,14 +53,14 @@ def inspect_ci(root):
             affected = [row["file"] for row in signals if predicate(row)]
             if affected:
                 todos.append({"id": "ci-" + key, "text": POLICY["ci-" + key] +
-                              " No local " + key + " signal: " + ", ".join(f"`{name}`" for name in affected) + "."})
+                              " No " + key + " hint: " + ", ".join(f"`{name}`" for name in affected) + "."})
         if unread or truncated:
-            todos.append({"id": "ci-review", "text": "Review CI files omitted by bounded inspection: " +
+            todos.append({"id": "ci-review", "text": "Review unscanned CI: " +
                           ", ".join([*(f"`{name}`" for name in unread),
                                      *(["additional files beyond scan limits"] if truncated else [])]) +
                           "; verify proportional checks and caching."})
         todos.append({"id": "ci-verify", "text": POLICY["ci-verify"]})
-    return {"alignment": "pending", "basis": "Local text hints only; local gates, commit evidence, hosted necessity, routing and cache effectiveness unverified",
+    return {"alignment": "pending", "basis": "Text hints; gates/commit evidence/hosted necessity/routing/cache effectiveness unverified",
             "files": signals, "unread": unread, "truncated": truncated, "todos": todos}
 
 

@@ -29,4 +29,6 @@ Task/member defaults; user/repo rules prevail.
 - Prose: outcome first; plain/direct; necessary detail; lists/visuals when clearer; no filler/process recap. Verified checks/evidence/links only; label hypotheses/gaps/gates. Material tradeoffs → principle + changed choice.
 - `restate` → [restate](../restate/SKILL.md).
 - `setup` → [scwlkr-project-setup](../scwlkr-project-setup/SKILL.md); "this project" = current repo unless specified.
+- `implement` → [wstack-implement](../wstack-implement/SKILL.md).
+- `code-review` → [wstack-code-review](../wstack-code-review/SKILL.md).
 - Unmatched → disclose + continue authorized work; no implied setup. Unreadable member → report path/block workflow.

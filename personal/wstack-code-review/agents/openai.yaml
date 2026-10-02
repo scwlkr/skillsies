@@ -1,0 +1,3 @@
+interface:
+  display_name: "Wstack Code Review"
+  short_description: "Review standards + spec separately"

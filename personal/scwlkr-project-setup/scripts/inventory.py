@@ -70,7 +70,7 @@ def detect_routes(root):
         found = {manager for lock, manager in locks if (root / lock).exists()}
         if len(found) > 1:
             raise ValueError("Conflicting package-manager lockfiles; resolve the package manager first")
-        manager = next(iter(found), "npm")
+        manager = next(iter(found), "pnpm")
     for name in sorted(package.get("scripts", {})):
         args = ["run", name] + (["--"] if manager == "npm" else [])
         add(name, manager, args, "node")

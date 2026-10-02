@@ -64,7 +64,8 @@ For Codex's built-in GitHub installer, explicitly pass this checkout's `others/`
 
 | Skill | Use it for |
 | --- | --- |
-| `wstack` | Apply personal coding principles and standards; route setup to its workflow. |
+| `wstack` | Apply personal coding principles and the preferred technical stack; route setup to its workflow. |
+| `scwlkr-project-setup` | Embed the preferred stack in project instructions; scaffold a Rust CLI and record adoption gaps. |
 | `initial-docs` | Create compact project documentation. |
 | `perfect-docs` | Improve an existing project's documentation system. |
 | `spring-cleaning` | Consolidate and standardize project docs. |

@@ -3,7 +3,6 @@
 
 - Project: {name}. Agent entry point: `./project --help`; use `./project doctor` to check prerequisites. Route project testing and automation through this Rust CLI; extend `tools/project-cli/src/routes.rs` as capabilities grow. Use underlying tools directly only to bootstrap or repair the CLI.
 - Drive real app behavior through the CLI, including UI drivers when relevant; observe outcomes and side effects. Shut down only processes you started and retain useful evidence. A passing scaffold/build is not proof of working app behavior.
-- Prefer Rust backends and TypeScript/React web frontends; use established alternatives such as Go when justified. Existing migrations belong in `SETUP-TODO.md`, not incidental changes.
 - Make the smallest correct change; preserve unrelated work. Keep focused modules around 300 lines, splitting by responsibility; generated/vendor files are exempt. Explain a necessary exception in the handoff, not a code comment.
 - Each test must protect observable behavior, a credible regression, or an independent contract not already covered. Prefer one strong owner-boundary check; remove redundant or implementation-coupled tests and unnecessary test-only seams while retaining meaningful regression coverage. Verify deletion candidates before removing them; prove regression tests fail before the fix and pass after it. Avoid test quotas and tests for trivial changes.
 - Linear is the sole work tracker: team **{team}**, project {linear_project}. Read the issue/discussion before substantive work; reuse or create an issue, include its ID in branches/PRs, and post concise verification or blockers. Mark Done only after acceptance is verified and the change lands on the default branch. Do not duplicate Linear in Markdown or GitHub Issues; `SETUP-TODO.md` is only a setup handoff.
@@ -11,4 +10,8 @@
 - When creating or changing CI, preserve proportional verification: lightweight checks for non-executable docs; focused code checks only with reliable scope detection; full checks for shared code, dependencies, build/CI configuration and uncertain scope. Generated docs and executable examples need their behavior checks. Cache costly dependencies/tools/builds with platform, toolchain and lockfile-aware keys. Every PR must report a stable required result reflecting all applicable checks; filtering must not leave it pending or hide failures. Verify routing and cache invalidation; keep unresolved alignment in `SETUP-TODO.md` until implemented and verified.
 - At task boundaries and after landing, aggressively remove completed, inactive worktrees and obsolete branches, plus their disposable build output. First verify useful commits are on GitHub and inspect uncommitted/untracked/ignored files; preserve useful local-only data appropriately. Never upload secrets or generated caches. Keep active/shared worktrees; use the host's archive tool for managed worktrees. Use the available using-git-worktrees skill when creating worktrees.
 - Investigate first, state material assumptions, and finish authorized work. Ask only for missing consequential information. Run the smallest meaningful checks; report actual verification, remaining gaps, and landing state.
+
+## Technical stack
+
+{technical_stack}
 <!-- scwlkr-project-setup:end -->

@@ -1,5 +1,6 @@
 """Exercise the public setup command and generated Rust CLI in disposable projects."""
 
+import hashlib
 import json
 import os
 import subprocess
@@ -42,6 +43,8 @@ class SetupTests(unittest.TestCase):
         self.assertEqual(list(self.root.iterdir()), [])
         result = self.first_apply()
         self.assertIn("project", result["changed"])
+        stack = (SKILL / "assets/technical-stack.md").read_text().strip()
+        self.assertIn(stack, (self.root / "AGENTS.md").read_text())
         checked = self.setup("check")
         self.assertTrue(checked["ready"])
         self.assertEqual(checked["ci_alignment"], "pending")
@@ -58,7 +61,9 @@ class SetupTests(unittest.TestCase):
         original = "# Product\n\nNever change the signed protocol.\n"
         (self.root / "AGENTS.md").write_text(original)
         (self.root / "README.md").write_text("Owner-written documentation.\n")
-        (self.root / "package.json").write_text(json.dumps({"name": "example", "scripts": {"test": "unused"}}))
+        (self.root / "package.json").write_text(json.dumps({
+            "name": "example", "packageManager": "npm@10.0.0", "scripts": {"test": "unused"},
+        }))
         self.first_apply()
         self.assertTrue((self.root / "AGENTS.md").read_text().startswith(original))
         self.assertEqual((self.root / "README.md").read_text(), "Owner-written documentation.\n")
@@ -82,6 +87,56 @@ class SetupTests(unittest.TestCase):
         shim.write_text("#!/bin/sh\nexit 1\n")
         self.assertFalse(self.setup("check", ok=False, env=env)["ready"])
         self.assertEqual(self.setup()["changed"], [])
+
+    def test_pnpm_default_and_existing_lockfile_choices(self):
+        package = self.root / "package.json"
+        package.write_text(json.dumps({"scripts": {"test": "unused"}}))
+        route = self.setup("inspect")["routes"][0]
+        self.assertEqual((route["program"], route["args"]), ("pnpm", ["run", "test"]))
+        self.first_apply()
+        binary = Path(self.temp.name) / "bin"
+        binary.mkdir()
+        shim = binary / "pnpm"
+        shim.write_text("#!/usr/bin/env python3\nimport json,sys\n"
+                        "print(json.dumps(sys.argv[1:]))\nsys.exit(19)\n")
+        shim.chmod(0o755)
+        env = {**os.environ, "PATH": str(binary) + os.pathsep + os.environ["PATH"]}
+        result = self.cli("test", "two words", env=env)
+        self.assertEqual(result.returncode, 19, result.stderr)
+        self.assertEqual(json.loads(result.stdout), ["run", "test", "two words"])
+        for lock, manager in (("package-lock.json", "npm"), ("yarn.lock", "yarn"),
+                              ("bun.lock", "bun"), ("pnpm-lock.yaml", "pnpm")):
+            with self.subTest(lock=lock):
+                path = self.root / lock
+                path.write_text("{}\n")
+                self.assertEqual(self.setup("inspect")["routes"][0]["program"], manager)
+                path.unlink()
+
+    def test_owned_old_instructions_upgrade_without_changing_product(self):
+        self.first_apply()
+        agents = self.root / "AGENTS.md"
+        old = ("<!-- scwlkr-project-setup:start -->\n## Project standards\n\n"
+               f"Project: {self.root.name}. Linear team **Example**, project {PROJECT}.\n"
+               "Prefer Rust backends and TypeScript/React web frontends.\n"
+               "<!-- scwlkr-project-setup:end -->")
+        owner = "# Owner\n\nKeep the existing Swift app until its migration is scheduled.\n\n"
+        agents.write_text(owner + old + "\n\nOwner footer.\n")
+        state_path = self.root / "tools/project-cli/setup.json"
+        state = json.loads(state_path.read_text())
+        state["hashes"]["agent_block"] = hashlib.sha256(old.encode()).hexdigest()
+        state_path.write_text(json.dumps(state, indent=2) + "\n")
+        product = self.root / "App.swift"
+        product.write_text("// Existing product source.\n")
+        result = self.setup()
+        self.assertEqual(set(result["changed"]), {"AGENTS.md", "tools/project-cli/setup.json"})
+        stack = (SKILL / "assets/technical-stack.md").read_text().strip()
+        self.assertIn(stack, agents.read_text())
+        self.assertTrue(agents.read_text().startswith(owner))
+        self.assertTrue(agents.read_text().endswith("\n\nOwner footer.\n"))
+        self.assertEqual(product.read_text(), "// Existing product source.\n")
+        before = self.snapshot()
+        self.assertEqual(self.setup()["changed"], [])
+        self.assertEqual(self.snapshot(), before)
 
     def test_existing_rust_app_runs_through_cli(self):
         (self.root / "Cargo.toml").write_text('[package]\nname="fixture-app"\nversion="0.1.0"\nedition="2021"\n[workspace]\n')

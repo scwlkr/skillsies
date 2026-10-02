@@ -83,7 +83,8 @@ def apply(root, args):
     generated("tools/project-cli/src/routes.rs", routes_source(info["routes"]))
     agents = read(root, "AGENTS.md")
     before, block, after = block_parts(agents)
-    desired = (ASSETS / "AGENTS.md").read_text().format(**config).strip()
+    desired = (ASSETS / "AGENTS.md").read_text().format(
+        **config, technical_stack=(ASSETS / "technical-stack.md").read_text().strip()).strip()
     if block and block != desired and digest(block) != hashes.get("agent_block"):
         if any(config[key] != old.get(key) for key in config):
             raise ValueError("Custom setup block conflicts with changed metadata; reconcile AGENTS.md first")

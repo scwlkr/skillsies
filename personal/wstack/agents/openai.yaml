@@ -1,4 +1,4 @@
 interface:
   display_name: "Wstack"
-  short_description: "Apply scwlkr's coding principles and connected workflows"
-  default_prompt: "Use $wstack to complete this task with scwlkr's coding standards."
+  short_description: "Coding principles + workflows"
+  default_prompt: "$wstack complete this task."

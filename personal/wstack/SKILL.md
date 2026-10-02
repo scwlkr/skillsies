@@ -1,6 +1,6 @@
 ---
 name: wstack
-description: "scwlkr's agent style for concise, detailed responses, deliberate subagents and subsystems, unslopped prose, simple code, and verified work. Use for wstack, /wstack, or requests to work in this style."
+description: "scwlkr's agent style for concise, detailed responses, deliberate subagents and subsystems, unslopped prose, simple code, verified work, and the preferred technical stack. Use for wstack, /wstack, or requests to work in this style."
 ---
 Task/member defaults; user/repo rules prevail.
 - Outcome: result + acceptance/proof; prioritize user experience + maintainability.
@@ -17,7 +17,7 @@ Task/member defaults; user/repo rules prevail.
 - Truth: actual checks/evidence/links only; label hypotheses/gaps/gates.
 - Delivery: issue implementation → acceptance verified → commit/sync → post evidence; applicable CI@current commit before merge/Done; Done only landed on default branch.
 - Chosen member: read full; resources on demand; preserve request/target; respect scope/completion contract.
-- New work: prefer Rust backend, TypeScript/React web. Retain existing stack; changes need justification + authorization.
+- Stack: for architecture, scaffolding, dependency or product implementation decisions, read [technical-stack.md](../scwlkr-project-setup/assets/technical-stack.md). Apply its defaults to new work and its migration target to existing products; implement only relevant layers/targets. Preserve working behavior; migrate within the authorized task and record remaining gaps.
 - Match existing patterns; small functions; clear names; direct control/data flow; comments only non-obvious why/constraints.
 - Files ≤300 lines; split by responsibility. Generated/vendor exempt; justify exceptions in reply.
 - Internal API change → migrate callers + delete obsolete paths; public contracts stay unless change authorized.

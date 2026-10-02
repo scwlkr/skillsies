@@ -15,7 +15,8 @@ Task/member defaults; user/repo rules prevail.
 - Scope: finish authorized work; no permission expansion/speculative additions; preserve unrelated work/user edits. Delete task-created dead code; flag other cleanup.
 - Questions: only unresolved blockers/consequential ambiguity.
 - Truth: actual checks/evidence/links only; label hypotheses/gaps/gates.
-- Delivery: issue implementation → acceptance verified → commit/sync → post evidence; applicable CI@current commit before merge/Done; Done only landed on default branch.
+- Local-first CI: strongly prefer automated checks on your machine; require applicable checks to pass on the exact commit before push/merge. Test a clean checkout; record SHA + commands + results. Edits/new SHA → rerun. Remote = storage/review; hosted runners only for a documented external requirement (e.g. a mandated Xcode Cloud workflow), with required results passing before merge/Done.
+- Delivery: issue implementation → acceptance verified → commit → local CI → sync → post evidence; Done only landed on default branch.
 - Chosen member: read full; resources on demand; preserve request/target; respect scope/completion contract.
 - Stack: for architecture, scaffolding, dependency or product implementation decisions, read [technical-stack.md](../scwlkr-project-setup/assets/technical-stack.md). Apply its defaults to new work and its migration target to existing products; implement only relevant layers/targets. Preserve working behavior; migrate within the authorized task and record remaining gaps.
 - Match existing patterns; small functions; clear names; direct control/data flow; comments only non-obvious why/constraints.

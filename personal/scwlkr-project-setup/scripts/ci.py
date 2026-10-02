@@ -6,7 +6,7 @@ from itertools import islice
 POLICY = {
     "ci-scope": "Separate lightweight documentation checks from full code verification; use focused code checks only with reliable scope detection, otherwise run full verification. Acceptance: docs-only changes avoid app builds; shared code, dependencies, build/CI configuration and uncertain scope run the full suite. Generated docs and executable examples receive their actual behavior checks.",
     "ci-cache": "Review repeated CI installs/builds and cache useful dependencies, tools and outputs with platform/toolchain/lockfile-aware keys. Acceptance: a warm run reuses work and dependency/toolchain changes invalidate affected caches; document any intentionally uncached expensive step.",
-    "ci-verify": "Verify CI routing and required-check results with representative docs, code, dependency and workflow changes. Acceptance: every PR reports the stable required result, skipped work cannot hide failures, and applicable checks pass on the current commit before merge. Local keyword detection does not prove this.",
+    "ci-verify": "Verify local CI routing with representative docs, code, dependency and CI configuration changes. Acceptance: retain the exact clean commit SHA, commands and aggregate results; applicable local checks pass before push/merge, skipped work cannot hide failures, and edits or a new commit SHA require fresh checks. Hosted runners need a documented external requirement; required hosted results also pass on the current commit before merge/Done. Local keyword detection does not prove this.",
 }
 PATTERNS = {
     "scope": r"paths(?:-ignore)?\s*:|(?:paths-filter|changed-files)@|git\s+diff\b|changes\s*:",
@@ -45,7 +45,7 @@ def inspect_ci(root):
     truncated |= len(ordered) > 32
     todos = []
     if not paths and not truncated:
-        todos.append({"id": "ci-discovery", "text": "Locate external/custom CI or plan a minimal pipeline when implementation is scheduled; no standard local CI config was found. Acceptance: document the entry point, proportional checks, useful caching and required merge results. Setup does not provision CI."})
+        todos.append({"id": "ci-discovery", "text": "Locate existing local CI gates or plan them behind `./project` when implementation is scheduled; no standard hosted CI config was found, which is not a gap by itself. Acceptance: document proportional checks, useful caching, and exact clean commit SHA/commands/results; passing applicable local checks gate push/merge, and changed commits require fresh checks. Hosted runners need a documented external requirement. Setup does not provision CI."})
     else:
         # Per-file hints avoid treating one cached/filtered workflow as coverage for all.
         for key, predicate in (("scope", lambda row: not row["scope"]),
@@ -60,7 +60,7 @@ def inspect_ci(root):
                                      *(["additional files beyond scan limits"] if truncated else [])]) +
                           "; verify proportional checks and caching."})
         todos.append({"id": "ci-verify", "text": POLICY["ci-verify"]})
-    return {"alignment": "pending", "basis": "Local text hints only; routing, cache effectiveness and required checks unverified",
+    return {"alignment": "pending", "basis": "Local text hints only; local gates, commit evidence, hosted necessity, routing and cache effectiveness unverified",
             "files": signals, "unread": unread, "truncated": truncated, "todos": todos}
 
 

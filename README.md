@@ -64,10 +64,6 @@ For Codex's built-in GitHub installer, explicitly pass this checkout's `others/`
 
 | Skill | Use it for |
 | --- | --- |
-| `wstack` | Apply shared coding principles and technical stack; route setup, restate, implementation and review. |
-| `wstack-implement` | Implement specs/issues; verify, review and deliver. |
-| `wstack-code-review` | Review a diff against repository standards and its spec. |
-| `scwlkr-project-setup` | Embed the preferred stack in project instructions; scaffold a Rust CLI and record adoption gaps. |
 | `initial-docs` | Create compact project documentation. |
 | `perfect-docs` | Improve an existing project's documentation system. |
 | `spring-cleaning` | Consolidate and standardize project docs. |
@@ -79,6 +75,16 @@ For Codex's built-in GitHub installer, explicitly pass this checkout's `others/`
 | `update-skills` | Check and update downloaded skills with a deterministic CLI. |
 
 `test-audit` is a locally customized version of [OpenClaw's test-audit](https://github.com/openclaw/openclaw/tree/main/.agents/skills/test-audit), retained as personal work so upstream updates cannot silently replace the adaptations. Keep attribution when editing or sharing derived skills.
+
+## Wstack
+
+Wstack is maintained in [scwlkr/wstack](https://github.com/scwlkr/wstack). Install the complete suite globally for Codex:
+
+```sh
+npx skills add scwlkr/wstack -g -a codex
+```
+
+This installs `wstack`, `wstack-implement`, `wstack-code-review`, `wstack-debug`, `wstack-setup` and `wstack-restate` into the ignored `others/` directory through the global link. The former personal Wstack copies have been removed from this repository; `scwlkr-project-setup` and `restate` are now `wstack-setup` and `wstack-restate`. Edit Wstack in its own checkout, then reinstall to refresh the global copies. Restart Codex if an existing chat still lists the previous skills.
 
 ## Install these skills elsewhere
 

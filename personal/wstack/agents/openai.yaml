@@ -1,4 +1,0 @@
-interface:
-  display_name: "Wstack"
-  short_description: "Coding principles, technical stack + workflows"
-  default_prompt: "$wstack complete this task."

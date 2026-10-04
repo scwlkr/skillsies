@@ -1,4 +1,0 @@
-interface:
-  display_name: "scwlkr project setup"
-  short_description: "Preferred stack + project setup with a Rust CLI"
-  default_prompt: "Use $scwlkr-project-setup to apply my project standards here."

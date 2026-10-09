@@ -1,7 +1,7 @@
 ## Linear work queue
 
 - Team: **WLKR LABS**.
-- Project: use the relevant owner-approved project, or leave unset. Do not route skillsies or Wstack work to maitools; it is not an owner-used project.
+- Project: [Wstack](https://linear.app/wlkr-labs/project/wstack-639fe4aa3615) for Wstack and skills work. Do not route work to maitools; it is not an owner-used project.
 - Linear is the task source of truth. Existing GitHub issues and Markdown plans are historical context; this section supersedes older tracker or backlog guidance.
 - Before starting substantive work, read the Linear issue and discussion and check for existing work. Find or create a Linear issue for substantive user-requested work, not every question or minor action.
 - Keep status current, include the issue ID in branches and PRs, and post concise outcomes or blockers. Mark Done only when completion criteria are met.

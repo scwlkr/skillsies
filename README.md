@@ -73,7 +73,6 @@ For Codex's built-in GitHub installer, explicitly pass this checkout's `others/`
 | `bubbas-public-style` | Apply the Bubba's Fireworks public-page visual system. |
 | `test-audit` | Assess test value using the active repository's own conventions. |
 | `update-skills` | Check and update downloaded skills with a deterministic CLI. |
-| `implement-spec` | Implement a spec with core, integration and ship-qualification boundaries and early preflight. |
 
 `test-audit` is a locally customized version of [OpenClaw's test-audit](https://github.com/openclaw/openclaw/tree/main/.agents/skills/test-audit), retained as personal work so upstream updates cannot silently replace the adaptations. Keep attribution when editing or sharing derived skills.
 

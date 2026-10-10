@@ -36,6 +36,9 @@ Instructions for the task.
 
 New folders inside `personal/` are discovered through the existing links. No separate installation step is needed. If a skill does not appear, restart Codex.
 
+Use `$plain-english` directly. Wstack also applies it to explanations, questions
+and general conversation when both skills are installed.
+
 Commit and push personal changes normally. Downloads are automatic; Git uploads remain deliberate.
 
 ## Download other people's skills
@@ -64,6 +67,7 @@ For Codex's built-in GitHub installer, explicitly pass this checkout's `others/`
 
 | Skill | Use it for |
 | --- | --- |
+| `plain-english` | Explain and converse with clear sentences, everyday words and practical examples. |
 | `initial-docs` | Create compact project documentation. |
 | `perfect-docs` | Improve an existing project's documentation system. |
 | `spring-cleaning` | Consolidate and standardize project docs. |

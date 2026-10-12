@@ -36,9 +36,6 @@ Instructions for the task.
 
 New folders inside `personal/` are discovered through the existing links. No separate installation step is needed. If a skill does not appear, restart Codex.
 
-Use `$plain-english` directly. Wstack also applies it to explanations, questions
-and general conversation when both skills are installed.
-
 Commit and push personal changes normally. Downloads are automatic; Git uploads remain deliberate.
 
 ## Download other people's skills
@@ -67,7 +64,6 @@ For Codex's built-in GitHub installer, explicitly pass this checkout's `others/`
 
 | Skill | Use it for |
 | --- | --- |
-| `plain-english` | Explain and converse with clear sentences, everyday words and practical examples. |
 | `initial-docs` | Create compact project documentation. |
 | `perfect-docs` | Improve an existing project's documentation system. |
 | `spring-cleaning` | Consolidate and standardize project docs. |
@@ -88,7 +84,15 @@ Wstack is maintained in [scwlkr/wstack](https://github.com/scwlkr/wstack). Insta
 npx skills add scwlkr/wstack -g -a codex
 ```
 
-This installs `wstack`, `wstack-implement`, `wstack-code-review`, `wstack-debug`, `wstack-setup` and `wstack-restate` into the ignored `others/` directory through the global link. The former personal Wstack copies have been removed from this repository; `scwlkr-project-setup` and `restate` are now `wstack-setup` and `wstack-restate`. Edit Wstack in its own checkout, then reinstall to refresh the global copies. Restart Codex if an existing chat still lists the previous skills.
+The suite, including `plain-english`, installs into the ignored `others/` directory through the global link. The former personal Wstack copies have been removed from this repository; `scwlkr-project-setup` and `restate` are now `wstack-setup` and `wstack-restate`. Edit Wstack in its own checkout, then reinstall to refresh the global copies. Restart Codex if an existing chat still lists the previous skills.
+
+Plain English is maintained only in Wstack. Its guidance is built into the core
+for explanations, answers and general conversation, and the standalone skill is
+callable as `$plain-english`. Install just that skill with:
+
+```sh
+npx skills add scwlkr/wstack --skill plain-english -g -a codex
+```
 
 ## Install these skills elsewhere
 

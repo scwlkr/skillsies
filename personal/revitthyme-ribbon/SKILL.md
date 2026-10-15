@@ -11,7 +11,7 @@ Make tasks easy to find, predict, and run through native Revit controls. SVG is 
 
 In a RevitThyme checkout, read `docs/RIBBON.md` before changing ribbon organization or icons. That maintained project standard owns the current command map, palette, asset paths, and export route. Follow its current decisions rather than copying an older layout from this skill. If it is absent, use the principles below and record project-specific decisions with the implementation.
 
-Inspect the ribbon registration and the command behavior. Identify what clicking opens or changes, supported document/view contexts, and existing internal IDs. Keep those IDs stable when renaming or moving controls. Work within the authorized commands; empty space is not a reason to invent features.
+Inspect the ribbon registration and the command behavior. Identify what clicking opens or changes, supported document/view contexts, and existing toolkit keys (`PushButtonData.Name`). Keep those keys stable for toolkit automation. Revit's generated native `CustomCtrl` paths also contain panel names; panel moves can change shortcut and Quick Access Toolbar paths despite stable toolkit keys. Assess existing mappings and document any reassignment needed rather than promising they survive. Work within the authorized commands; empty space is not a reason to invent features.
 
 ## Choose organization and controls
 

@@ -1,0 +1,6 @@
+interface:
+  display_name: "RevitThyme Ribbon"
+  short_description: "Organize native Revit tools and design SVG icons"
+  default_prompt: "Use $revitthyme-ribbon to organize these RevitThyme commands and create consistent SVG ribbon icons."
+policy:
+  allow_implicit_invocation: true

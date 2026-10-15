@@ -68,6 +68,7 @@ For Codex's built-in GitHub installer, explicitly pass this checkout's `others/`
 | `perfect-docs` | Improve an existing project's documentation system. |
 | `spring-cleaning` | Consolidate and standardize project docs. |
 | `design-refine` | Refine design decisions and produce synced design artifacts. |
+| `tldraw-visual` | Make tldraw boards visual, engaging, and easy to scan. |
 | `write-a-skill` | Write reusable agent skills. |
 | `relentless-execution` | Add an execution mandate to a prompt. |
 | `bubbas-public-style` | Apply the Bubba's Fireworks public-page visual system. |
